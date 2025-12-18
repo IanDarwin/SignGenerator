@@ -1,0 +1,5 @@
+= text3d
+
+An attempt at making text strings into 3d shapes e.g., signs.
+
+Project started with a Claude Code prompt (groan).

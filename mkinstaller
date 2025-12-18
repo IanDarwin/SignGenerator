@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# Runs jpackage to create installables.
+# Note there are now two different 'jpackage-maven-plugin' plugins,
+# so this could eventually be moved into the Maven pom.xml file.
+
+RELEASE_VERSION=1.1.0	# DRY? Keep in sync with pom file
+
+USAGE="$0 [-t installer-type] [-v]"
+
+usage() {		# give usage message, and exit
+	echo "Usage: ${USAGE}" 2>&1
+	exit 1
+}
+
+# Check for known OS and set os-specific options
+case $(uname) in
+	M*_NT-10*)	inst_format=msi
+			icon_format=ico
+			OS_SPECIFIC="--win-menu --win-shortcut"
+			;;
+	Darwin)		inst_format=dmg
+			icon_format=icns
+			;;
+	Linux)		inst_format="rpm deb"
+			icon_format=png
+			OS_SPECIFIC="--linux-shortcut --linux-menu-group Office --linux-app-category Office --resource-dir unixlinux"
+			;;
+	*)
+			echo "Don't know how to package for this OS, sorry.";
+			exit 1;
+esac
+
+# Next, let's make sure jpackage is available (most likely failure?)
+FOUND=0
+OLDIFS=$IFS
+IFS=':'; for d in $PATH; do if [ -x $d/jpackage ]; then FOUND=1; break; fi; done
+IFS=$OLDIFS
+
+if [ $FOUND -eq 0 ]; then
+	echo 'jpackage not on $PATH; please install modern JDK, use supported OS, and set PATH correctly'
+	exit 1
+fi
+
+# Make sure our code is up-to-date
+git pull
+
+# Now try command-line args
+BUILT=NO
+
+while getopts "bst:v" opt
+do
+	case "$opt" in
+		b)	BUILT=YES;; # Use already-built uber-jar
+		s)	SKIP_TESTS=-DskipTests;;
+		t)	inst_format=$OPTARG;;
+		v)	VERBOSE=true;;
+		*)	usage;;
+	esac
+done
+shift $(expr $OPTIND - 1)		 # leave just filenames
+
+set -e	# failures after here -> game over
+
+if [ "${BUILT}" = "NO" ]; then
+	mvn ${SKIP_TESTS} clean package assembly:single
+fi
+
+if $VERBOSE; then
+	set -x
+fi
+
+# Use jlink to build a smaller JRE-like thing
+rm -rf signgenerator-runtime
+jlink --output signgenerator-runtime --add-modules java.base,java.desktop,java.logging
+
+# Now use jpackage with that runtime image to create the final installer.
+for fmt in ${inst_format}; do
+    jpackage \
+	--name SignGenerator \
+	--app-version ${RELEASE_VERSION} \
+	--license-file LICENSE.txt \
+	--vendor "Rejminet Group Inc." \
+	--about-url https://darwinsys.com/signgenerator \
+	--type "${fmt}" \
+	--icon src/main/resources/images/logo.${icon_format} \
+	--input target \
+	--main-jar signgenerator-${RELEASE_VERSION}-jar-with-dependencies.jar \
+	--runtime-image signgenerator-runtime \
+	${OS_SPECIFIC} || {
+		echo jpackage did not complete normally!
+		exit 1
+	}
+done
+
+echo "$0 done at $(date)"
