@@ -461,9 +461,10 @@ public class SignGenerator extends JFrame {
                 }
             }
         } catch (Exception e) {
-            System.err.println("JTS triangulation failed, using fallback: " + e.getClass().getSimpleName());
             // Uncomment below for full stack trace during debugging:
+            // System.err.println("JTS triangulation failed, using fallback: " + e.getClass().getSimpleName());
             // e.printStackTrace();
+            
             // Fallback to simple fan triangulation if JTS fails
             Point2D center = calculateCentroid(outer);
             for (int i = 0; i < outer.size(); i++) {
