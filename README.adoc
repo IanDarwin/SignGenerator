@@ -1,6 +1,6 @@
-= text3d
+= SignGenerator
 
-An attempt at making text strings into 3d shapes e.g., signs.
+Program to make text strings into 3d shapes e.g., signs.
 
 Project started with a Claude Code prompt (groan).
 Lots of other work added.
@@ -11,3 +11,5 @@ Lots more to do:
 	Make the text entry widget into a preview (still at 12pt).
 	Handle bold/italic better?
 	Settings for padding.
+	Centering, right-align
+	Place logos?
