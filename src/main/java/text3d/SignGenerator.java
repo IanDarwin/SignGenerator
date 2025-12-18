@@ -168,6 +168,7 @@ public class SignGenerator extends JFrame {
     }
 
     private void generateSTLFile(String text, Font font, File file) throws IOException {
+
         List<Shape> letterShapes = new ArrayList<>();
         String[] lines = text.split("\n");
         double currentY = 0;
@@ -460,8 +461,9 @@ public class SignGenerator extends JFrame {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Triangulation failed: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("JTS triangulation failed, using fallback: " + e.getClass().getSimpleName());
+            // Uncomment below for full stack trace during debugging:
+            // e.printStackTrace();
             // Fallback to simple fan triangulation if JTS fails
             Point2D center = calculateCentroid(outer);
             for (int i = 0; i < outer.size(); i++) {
