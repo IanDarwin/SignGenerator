@@ -30,7 +30,8 @@ public class SignGenerator extends JFrame {
     private JTextArea textArea;
     private JButton generateButton;
     private JLabel statusLabel;
-    private Font font;
+    private Font previewFont;
+    private Font renderFont;
     private JPanel infoPanel;
 
     // Dimensions in mm
@@ -43,20 +44,44 @@ public class SignGenerator extends JFrame {
     // Font settings
     private static final String DEFAULT_FONT_NAME = "Arial";
     private static final int DEFAULT_FONT_STYLE = Font.BOLD;
-    private static final int DEFAULT_FONT_SIZE = 36;
+    private static final int RENDER_FONT_DEFAULT_SIZE = 36;
+    private static final int PREVIEW_FONT_SIZE = 14;
+
+    public static final String STARTER_TEXT = "HELLO\nWORLD";
 
     public SignGenerator() {
         setTitle("3D Sign Generator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
+        JMenuBar bar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        var newSign = new JMenuItem("New Sign");
+        newSign.addActionListener(e -> textArea.setText(STARTER_TEXT));
+        fileMenu.add(newSign);
+        fileMenu.addSeparator();
+        var load = new JMenuItem("Load File...");
+        load.setEnabled(false);
+        fileMenu.add(load);
+        var exit = new JMenuItem("Exit");
+        exit.addActionListener(e -> System.exit(0));
+        fileMenu.add(exit);
+        bar.add(fileMenu);
+
+        JMenu editMenu = new JMenu("Edit");
+        bar.add(editMenu);
+
+        setJMenuBar(bar);
+
+
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         JLabel instructionLabel = new JLabel("Enter text for your 3D sign:");
         textArea = new JTextArea(5, 40);
-        textArea.setFont(new Font("Arial", Font.PLAIN, 14));
-        textArea.setText("HELLO\nWORLD");
+        previewFont = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, PREVIEW_FONT_SIZE);
+        textArea.setFont(previewFont);
+        textArea.setText(STARTER_TEXT);
         textArea.setLineWrap(false);
 
         JScrollPane scrollPane = new JScrollPane(textArea);
@@ -64,17 +89,12 @@ public class SignGenerator extends JFrame {
         inputPanel.add(scrollPane, BorderLayout.CENTER);
 
         // Create a default font
-        font = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, DEFAULT_FONT_SIZE);
+        renderFont = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, RENDER_FONT_DEFAULT_SIZE);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         var setFontButton = new JButton("Change font");
         setFontButton.addActionListener(e -> {
-            FontChooser chooser = new FontChooser(this);
-            chooser.setVisible(true); // Blocking
-            font = chooser.getSelectedFont();
-            if (font != null) {
-                updateInfoPanel(font);
-            }
+            changeFont();
         });
         buttonPanel.add(setFontButton);
 
@@ -87,7 +107,7 @@ public class SignGenerator extends JFrame {
 
         infoPanel = new JPanel(new GridLayout(0, 1, 5, 5));
         infoPanel.setBorder(BorderFactory.createTitledBorder("3D Print Settings"));
-        updateInfoPanel(font);
+        updatePanels();
 
         JPanel rightPanel = new JPanel(new BorderLayout());
         rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
@@ -102,11 +122,22 @@ public class SignGenerator extends JFrame {
         setLocationRelativeTo(null);
     }
 
-    private void updateInfoPanel(Font font) {
+    private void changeFont() {
+        FontChooser chooser = new FontChooser(this);
+        chooser.setVisible(true); // Blocking
+        renderFont = chooser.getSelectedFont();
+        if (renderFont != null) {
+            previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
+            updatePanels();
+        }
+    }
+
+    private void updatePanels() {
+        textArea.setFont(previewFont);
         infoPanel.removeAll();
         infoPanel.add(new JLabel(
                 String.format("Font: %s Bold Size %dpt",
-                        font.getName(), font.getSize())));
+                        renderFont.getName(), renderFont.getSize())));
         infoPanel.add(new JLabel("Base height: " + BASE_HEIGHT + " mm"));
         infoPanel.add(new JLabel("Letter height: " + LETTER_HEIGHT + " mm"));
         infoPanel.add(new JLabel("Bevel depth: " + BEVEL_DEPTH + " mm"));
@@ -137,7 +168,7 @@ public class SignGenerator extends JFrame {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    generateSTLFile(text, font, ffile);
+                    generateSTLFile(text, renderFont, ffile);
                     return null;
                 }
 
@@ -464,7 +495,7 @@ public class SignGenerator extends JFrame {
             // Uncomment below for full stack trace during debugging:
             // System.err.println("JTS triangulation failed, using fallback: " + e.getClass().getSimpleName());
             // e.printStackTrace();
-            
+
             // Fallback to simple fan triangulation if JTS fails
             Point2D center = calculateCentroid(outer);
             for (int i = 0; i < outer.size(); i++) {

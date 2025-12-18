@@ -7,8 +7,6 @@ Lots of other work added.
 
 Lots more to do:
 
-	Canonical menu system (file, edit, etc)
-	Make the text entry widget into a preview (still at 12pt).
 	Handle bold/italic better?
 	Settings for padding.
 	Centering, right-align
