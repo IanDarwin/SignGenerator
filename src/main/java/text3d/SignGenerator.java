@@ -6,10 +6,10 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import javax.swing.filechooser.FileFilter;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,9 +60,20 @@ public class SignGenerator extends JFrame {
         newSign.addActionListener(e -> textArea.setText(STARTER_TEXT));
         fileMenu.add(newSign);
         fileMenu.addSeparator();
-        var load = new JMenuItem("Load File...");
-        load.setEnabled(false);
+        var load = new JMenuItem("Load Text...");
+        load.addActionListener(e -> loadText());
         fileMenu.add(load);
+        fileMenu.addSeparator();
+        var open = new JMenuItem("Open...");
+        open.addActionListener(e -> openFile());
+        fileMenu.add(open);
+        var save = new JMenuItem("Save");
+        save.addActionListener(e -> saveExisting());
+        fileMenu.add(save);
+        var saveAs = new JMenuItem("Save As...");
+        saveAs.addActionListener(e -> saveFileAs());
+        fileMenu.add(saveAs);
+        fileMenu.addSeparator();
         var exit = new JMenuItem("Exit");
         exit.addActionListener(e -> System.exit(0));
         fileMenu.add(exit);
@@ -130,6 +141,48 @@ public class SignGenerator extends JFrame {
             previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
             updatePanels();
         }
+    }
+
+    private static class TextFileFilter extends FileFilter {
+        @Override
+        public boolean accept(File pathName) {
+            return pathName.getName().endsWith(".txt");
+        }
+
+        @Override
+        public String getDescription() {
+            return "Text filter";
+        }
+    }
+
+    private void loadText() {
+        System.out.println("loadText");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Load Text");
+        fileChooser.setApproveButtonText("Load sign text");
+        fileChooser.setFileFilter(new TextFileFilter());
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            Path target = fileChooser.getSelectedFile().toPath();
+            try {
+                String text = Files.readString(target);
+                textArea.setText(text);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+    }
+
+    private void openFile() {
+        System.out.println("openFile: Not written yet");
+    }
+
+    private void saveExisting() {
+        System.out.println("saveExisting: Not written yet");
+    }
+
+    private void saveFileAs() {
+        System.out.println("saveFileAs: Not written yet");
     }
 
     private void updatePanels() {

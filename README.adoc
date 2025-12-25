@@ -8,6 +8,7 @@ Lots of other work added.
 Lots more to do:
 
 	Handle bold/italic better?
+    Load/save of sign
 	Settings for padding.
 	Centering, right-align
 	Place logos?
