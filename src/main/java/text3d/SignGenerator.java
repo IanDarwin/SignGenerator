@@ -28,11 +28,10 @@ import org.locationtech.jts.geom.Geometry;
 
 public class SignGenerator extends JFrame {
     private JTextArea textArea;
-    private JButton generateButton;
-    private JLabel statusLabel;
-    private Font previewFont;
-    private Font renderFont;
-    private JPanel infoPanel;
+    private final JButton generateSTLButton, generate3MFButton;
+    private final JLabel statusLabel;
+    private Font previewFont, renderFont;
+    private final JPanel infoPanel;
 
     // Dimensions in mm
     private static final double BASE_HEIGHT = 2.0;
@@ -104,14 +103,16 @@ public class SignGenerator extends JFrame {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         var setFontButton = new JButton("Change font");
-        setFontButton.addActionListener(e -> {
-            changeFont();
-        });
+        setFontButton.addActionListener(e -> changeFont());
         buttonPanel.add(setFontButton);
 
-        generateButton = new JButton("Generate STL File");
-        generateButton.addActionListener(e -> generateSTL());
-        buttonPanel.add(generateButton);
+        generateSTLButton = new JButton("Generate STL File");
+        generateSTLButton.addActionListener(e -> generateSTL());
+        buttonPanel.add(generateSTLButton);
+
+        generate3MFButton = new JButton("Generate 3MF File");
+        generate3MFButton.addActionListener(e -> generate3MF());
+        buttonPanel.add(generate3MFButton);
 
         statusLabel = new JLabel("Ready to generate");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
@@ -215,7 +216,7 @@ public class SignGenerator extends JFrame {
             }
             final File ffile = file;
 
-            generateButton.setEnabled(false);
+            generateSTLButton.setEnabled(false);
             statusLabel.setText("Generating STL...");
 
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
@@ -243,7 +244,7 @@ public class SignGenerator extends JFrame {
                             "Error", JOptionPane.ERROR_MESSAGE);
                         ex.printStackTrace();
                     } finally {
-                        generateButton.setEnabled(true);
+                        generateSTLButton.setEnabled(true);
                     }
                 }
             };
@@ -272,7 +273,7 @@ public class SignGenerator extends JFrame {
             throw new IOException("No valid text to generate");
         }
 
-        Rectangle2D overallBounds = letterShapes.get(0).getBounds2D();
+        Rectangle2D overallBounds = letterShapes.getFirst().getBounds2D();
         for (int i = 1; i < letterShapes.size(); i++) {
             overallBounds = overallBounds.createUnion(letterShapes.get(i).getBounds2D());
         }
@@ -381,7 +382,7 @@ public class SignGenerator extends JFrame {
         // For simplicity, assume all holes belong to the first outer contour
         // A more robust solution would determine which holes belong to which outer
         if (!outerContours.isEmpty()) {
-            addLetterWithProperTriangulation(triangles, outerContours.get(0), holeContours);
+            addLetterWithProperTriangulation(triangles, outerContours.getFirst(), holeContours);
         }
     }
 
@@ -504,7 +505,7 @@ public class SignGenerator extends JFrame {
                 outerCoords[i] = new Coordinate(p.getX(), p.getY());
             }
             // Close the ring
-            outerCoords[cleanOuter.size()] = new Coordinate(cleanOuter.get(0).getX(), cleanOuter.get(0).getY());
+            outerCoords[cleanOuter.size()] = new Coordinate(cleanOuter.getFirst().getX(), cleanOuter.get(0).getY());
 
             LinearRing shell = gf.createLinearRing(outerCoords);
 
@@ -520,7 +521,7 @@ public class SignGenerator extends JFrame {
                     holeCoords[i] = new Coordinate(p.getX(), p.getY());
                 }
                 // Close the ring
-                holeCoords[cleanHole.size()] = new Coordinate(cleanHole.get(0).getX(), cleanHole.get(0).getY());
+                holeCoords[cleanHole.size()] = new Coordinate(cleanHole.getFirst().getX(), cleanHole.get(0).getY());
                 holeRings[h] = gf.createLinearRing(holeCoords);
             }
 
@@ -570,7 +571,7 @@ public class SignGenerator extends JFrame {
         List<Point2D> result = new ArrayList<>();
         if (points.isEmpty()) return result;
 
-        result.add(points.get(0));
+        result.add(points.getFirst());
         for (int i = 1; i < points.size(); i++) {
             Point2D prev = result.get(result.size() - 1);
             Point2D curr = points.get(i);
@@ -582,7 +583,7 @@ public class SignGenerator extends JFrame {
 
         // Check if first and last are too close
         if (result.size() > 1) {
-            double dist = result.get(0).distance(result.get(result.size() - 1));
+            double dist = result.getFirst().distance(result.get(result.size() - 1));
             if (dist <= tolerance) {
                 result.remove(result.size() - 1);
             }
@@ -723,6 +724,217 @@ public class SignGenerator extends JFrame {
         double nz = ux * vy - uy * vx;
         double len = Math.sqrt(nx*nx + ny*ny + nz*nz);
         return new Point3D(nx/len, ny/len, nz/len);
+    }
+
+    private void generate3MF() {
+        String text = textArea.getText().trim();
+        if (text.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Please enter some text", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save 3MF File");
+        fileChooser.setSelectedFile(new File("sign.3mf"));
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File file = fileChooser.getSelectedFile();
+            if (!file.getName().toLowerCase().endsWith(".3mf")) {
+                file = new File(file.getAbsolutePath() + ".3mf");
+            }
+            final File ffile = file;
+
+            generate3MFButton.setEnabled(false);
+            statusLabel.setText("Generating 3MF...");
+
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    generate3MFFile(text, renderFont, ffile);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        get();
+                        statusLabel.setText("3MF file generated successfully: " + ffile.getName());
+                        JOptionPane.showMessageDialog(SignGenerator.this,
+                            "3MF file created successfully!\n\nFor multi-color printing:\n" +
+                            "1. Base: Z = 0 to " + BASE_HEIGHT + " mm\n" +
+                            "2. Letter body: Z = " + BASE_HEIGHT + " to " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_DEPTH) + " mm\n" +
+                            "3. Letter front (beveled): Z = " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_DEPTH) + " to " + (BASE_HEIGHT + LETTER_HEIGHT) + " mm",
+                            "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } catch (Exception ex) {
+                        statusLabel.setText("Error: " + ex.getMessage());
+                        JOptionPane.showMessageDialog(SignGenerator.this,
+                            "Error generating 3MF: " + ex.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
+                        ex.printStackTrace();
+                    } finally {
+                        generate3MFButton.setEnabled(true);
+                    }
+                }
+            };
+            worker.execute();
+        }
+    }
+
+    private void generate3MFFile(String text, Font font, File file) throws IOException {
+        // Generate the triangles just like for STL
+        List<Shape> letterShapes = new ArrayList<>();
+        String[] lines = text.split("\n");
+        double currentY = 0;
+
+        for (String line : lines) {
+            if (line.trim().isEmpty()) continue;
+
+            Shape lineShape = createTextShape(line, font, 0, currentY);
+            if (lineShape != null) {
+                letterShapes.add(lineShape);
+                Rectangle2D bounds = lineShape.getBounds2D();
+                currentY += bounds.getHeight() + 10;
+            }
+        }
+
+        if (letterShapes.isEmpty()) {
+            throw new IOException("No valid text to generate");
+        }
+
+        Rectangle2D overallBounds = letterShapes.getFirst().getBounds2D();
+        for (int i = 1; i < letterShapes.size(); i++) {
+            overallBounds = overallBounds.createUnion(letterShapes.get(i).getBounds2D());
+        }
+
+        Rectangle2D baseBounds = new Rectangle2D.Double(
+            overallBounds.getX() - BASE_MARGIN,
+            overallBounds.getY() - BASE_MARGIN,
+            overallBounds.getWidth() + 2 * BASE_MARGIN,
+            overallBounds.getHeight() + 2 * BASE_MARGIN
+        );
+
+        List<Triangle> triangles = new ArrayList<>();
+        addBase(triangles, baseBounds);
+        for (Shape shape : letterShapes) {
+            addLetterGeometry(triangles, shape);
+        }
+
+        // Write 3MF file (it's a ZIP containing XML)
+        write3MF(triangles, file);
+    }
+
+    private void write3MF(List<Triangle> triangles, File file) throws IOException {
+        // 3MF is a ZIP file with specific structure
+        try (java.util.zip.ZipOutputStream zos = new java.util.zip.ZipOutputStream(
+                new FileOutputStream(file))) {
+
+            // Add [Content_Types].xml
+            zos.putNextEntry(new java.util.zip.ZipEntry("[Content_Types].xml"));
+            zos.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<Types xmlns=\"http://schemas.openxmlformats.org/package/2006/content-types\">\n" +
+                "  <Default Extension=\"rels\" ContentType=\"application/vnd.openxmlformats-package.relationships+xml\"/>\n" +
+                "  <Default Extension=\"model\" ContentType=\"application/vnd.ms-package.3dmanufacturing-3dmodel+xml\"/>\n" +
+                "</Types>\n").getBytes());
+            zos.closeEntry();
+
+            // Add _rels/.rels
+            zos.putNextEntry(new java.util.zip.ZipEntry("_rels/.rels"));
+            zos.write(("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                "<Relationships xmlns=\"http://schemas.openxmlformats.org/package/2006/relationships\">\n" +
+                "  <Relationship Target=\"/3D/3dmodel.model\" Id=\"rel0\" Type=\"http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel\"/>\n" +
+                "</Relationships>\n").getBytes());
+            zos.closeEntry();
+
+            // Add 3D/3dmodel.model (the main model file with color info)
+            zos.putNextEntry(new java.util.zip.ZipEntry("3D/3dmodel.model"));
+            write3DModel(zos, triangles);
+            zos.closeEntry();
+        }
+    }
+
+    private void write3DModel(java.util.zip.ZipOutputStream zos, List<Triangle> triangles) throws IOException {
+        StringBuilder xml = new StringBuilder();
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        xml.append("<model unit=\"millimeter\" xml:lang=\"en-US\" xmlns=\"http://schemas.microsoft.com/3dmanufacturing/core/2015/02\">\n");
+        xml.append("  <resources>\n");
+
+        // Define materials/colors
+        xml.append("    <basematerials id=\"1\">\n");
+        xml.append("      <base name=\"Base\" displaycolor=\"#FF8B4513\"/>\n");  // Brown for base
+        xml.append("      <base name=\"Body\" displaycolor=\"#FF4169E1\"/>\n");   // Blue for letter body
+        xml.append("      <base name=\"Front\" displaycolor=\"#FFFFD700\"/>\n");  // Gold for letter front
+        xml.append("    </basematerials>\n");
+
+        // Build vertex and triangle lists
+        List<Point3D> vertices = new ArrayList<>();
+        List<Integer> triangleIndices = new ArrayList<>();
+        List<Integer> triangleMaterials = new ArrayList<>();
+
+        for (Triangle tri : triangles) {
+            int idx1 = addVertex(vertices, tri.p1);
+            int idx2 = addVertex(vertices, tri.p2);
+            int idx3 = addVertex(vertices, tri.p3);
+
+            triangleIndices.add(idx1);
+            triangleIndices.add(idx2);
+            triangleIndices.add(idx3);
+
+            // Determine material based on Z height
+            double avgZ = (tri.p1.z + tri.p2.z + tri.p3.z) / 3.0;
+            int material;
+            if (avgZ < BASE_HEIGHT + 0.1) {
+                material = 0; // Base
+            } else if (avgZ < BASE_HEIGHT + LETTER_HEIGHT - BEVEL_DEPTH + 0.1) {
+                material = 1; // Body
+            } else {
+                material = 2; // Front
+            }
+            triangleMaterials.add(material);
+        }
+
+        // Write mesh object
+        xml.append("    <object id=\"2\" type=\"model\">\n");
+        xml.append("      <mesh>\n");
+        xml.append("        <vertices>\n");
+        for (Point3D v : vertices) {
+            xml.append(String.format("          <vertex x=\"%.6f\" y=\"%.6f\" z=\"%.6f\"/>\n",
+                v.x, v.y, v.z));
+        }
+        xml.append("        </vertices>\n");
+        xml.append("        <triangles>\n");
+        for (int i = 0; i < triangleIndices.size(); i += 3) {
+            // All three vertices of the triangle use the same material
+            int mat = triangleMaterials.get(i / 3);
+            xml.append(String.format("          <triangle v1=\"%d\" v2=\"%d\" v3=\"%d\" pid=\"1\" p1=\"%d\" p2=\"%d\" p3=\"%d\"/>\n",
+                triangleIndices.get(i),
+                triangleIndices.get(i + 1),
+                triangleIndices.get(i + 2),
+                mat, mat, mat));  // All vertices use same material
+        }
+        xml.append("        </triangles>\n");
+        xml.append("      </mesh>\n");
+        xml.append("    </object>\n");
+        xml.append("  </resources>\n");
+        xml.append("  <build>\n");
+        xml.append("    <item objectid=\"2\"/>\n");
+        xml.append("  </build>\n");
+        xml.append("</model>\n");
+
+        zos.write(xml.toString().getBytes());
+    }
+
+    private int addVertex(List<Point3D> vertices, Point3D p) {
+        // Check if vertex already exists (for efficiency)
+        for (int i = 0; i < vertices.size(); i++) {
+            Point3D existing = vertices.get(i);
+            if (Math.abs(existing.x - p.x) < 0.0001 &&
+                Math.abs(existing.y - p.y) < 0.0001 &&
+                Math.abs(existing.z - p.z) < 0.0001) {
+                return i;
+            }
+        }
+        vertices.add(p);
+        return vertices.size() - 1;
     }
 
     private void writeSTL(List<Triangle> triangles, File file) throws IOException {
