@@ -3,12 +3,21 @@
 Program to make text strings into 3d shapes e.g., signs.
 
 Project started with a Claude Code prompt (groan).
-Lots of other work added.
+UI mostly redone by a human.
 
-Lots more to do:
+== Usage & Caveats
 
-	Change font selection to an Edit menu item, not button?
-    Load/save: save vs save as, load to restore both fonts.
-	Settings for padding?
-	Centering, right-align?
-	Place logos?
+Just run it. Either type your sign text into the text box,
+or, use File->Load to load the sign text from a ".txt" file.
+
+Note: quite a few fonts have issues with the rendering code.
+Trial and error will be your friend.
+
+== Lots more to do:
+
+* Move font selection to an Edit menu item, not button?
+* Load/save: finish save vs save as, load() to restore,
+don't forget to update both fonts. Add "Saved" popup to be consistent.
+* Settings for padding?
+* Centering, right-align?
+* Place logos?
