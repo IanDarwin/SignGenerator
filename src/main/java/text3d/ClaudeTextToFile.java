@@ -22,9 +22,10 @@ import static text3d.SignGenerator.*;
 /** All the geometry calculations for the Sign Generator.
  * @author Claude.io
  */
-public class GeometryCalcs {
+public class ClaudeTextToFile implements TextToFile {
 
-    void generateFile(String text, Font font, File file, OutputFormat format) throws IOException {
+    @Override
+    public void generateFile(String text, Font font, File file, OutputFormat format) throws IOException {
         java.util.List<Shape> letterShapes = new ArrayList<>();
         String[] lines = text.split("\n");
         double currentY = 0;
@@ -147,6 +148,22 @@ public class GeometryCalcs {
         zos.write(xml.toString().getBytes());
     }
 
+    private int addVertex(java.util.List<Point3D> vertices, Point3D p) {
+        // Check if vertex already exists with very tight tolerance
+        // This is critical for eliminating open edges
+        final double EPSILON = 1e-9;
+        for (int i = 0; i < vertices.size(); i++) {
+            Point3D existing = vertices.get(i);
+            if (Math.abs(existing.x - p.x) < EPSILON &&
+                Math.abs(existing.y - p.y) < EPSILON &&
+                Math.abs(existing.z - p.z) < EPSILON) {
+                return i;
+            }
+        }
+        vertices.add(p);
+        return vertices.size() - 1;
+    }
+
     private void writeSTL(List<Triangle> triangles, File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write("solid sign\n");
@@ -169,19 +186,7 @@ public class GeometryCalcs {
         }
     }
 
-    private static class Point3D {
-        double x, y, z;
-        Point3D(double x, double y, double z) {
-            this.x = x; this.y = y; this.z = z;
-        }
-    }
 
-    private static class Triangle {
-        Point3D p1, p2, p3, normal;
-        Triangle(Point3D p1, Point3D p2, Point3D p3, Point3D normal) {
-            this.p1 = p1; this.p2 = p2; this.p3 = p3; this.normal = normal;
-        }
-    }
 
     private Shape createTextShape(String text, Font font, double x, double y) {
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
@@ -226,6 +231,7 @@ public class GeometryCalcs {
         java.util.List<java.util.List<Point2D>> allContours = new ArrayList<>();
         java.util.List<Point2D> currentContour = new ArrayList<>();
         double[] coords = new double[6];
+        Point2D firstPoint = null;
 
         while (!pi.isDone()) {
             int type = pi.currentSegment(coords);
@@ -235,19 +241,40 @@ public class GeometryCalcs {
                     allContours.add(new ArrayList<>(currentContour));
                 }
                 currentContour.clear();
-                currentContour.add(new Point2D.Double(coords[0], coords[1]));
+                firstPoint = new Point2D.Double(coords[0], coords[1]);
+                currentContour.add(firstPoint);
             } else if (type == PathIterator.SEG_LINETO) {
-                currentContour.add(new Point2D.Double(coords[0], coords[1]));
+                Point2D newPoint = new Point2D.Double(coords[0], coords[1]);
+                // Only add if it's not a duplicate of the last point
+                if (currentContour.isEmpty() ||
+                    currentContour.getLast().distance(newPoint) > 0.001) {
+                    currentContour.add(newPoint);
+                }
             } else if (type == PathIterator.SEG_CLOSE) {
+                // Ensure the contour is actually closed
+                if (!currentContour.isEmpty() && firstPoint != null) {
+                    Point2D lastPoint = currentContour.getLast();
+                    if (lastPoint.distance(firstPoint) > 0.001) {
+                        currentContour.add(new Point2D.Double(firstPoint.getX(), firstPoint.getY()));
+                    }
+                }
                 if (currentContour.size() > 2) {
                     allContours.add(new ArrayList<>(currentContour));
                 }
                 currentContour.clear();
+                firstPoint = null;
             }
             pi.next();
         }
 
+        // Handle unclosed contour at end
         if (currentContour.size() > 2) {
+            if (firstPoint != null) {
+                Point2D lastPoint = currentContour.getLast();
+                if (lastPoint.distance(firstPoint) > 0.001) {
+                    currentContour.add(new Point2D.Double(firstPoint.getX(), firstPoint.getY()));
+                }
+            }
             allContours.add(new ArrayList<>(currentContour));
         }
 
@@ -265,12 +292,37 @@ public class GeometryCalcs {
             }
         }
 
-        // Process each outer contour with its associated holes
-        // For simplicity, assume all holes belong to the first outer contour
-        // A more robust solution would determine which holes belong to which outer
-        if (!outerContours.isEmpty()) {
-            addLetterWithProperTriangulation(triangles, outerContours.getFirst(), holeContours);
+        // Process EACH outer contour with its associated holes
+        // Match holes to their containing outer contours
+        for (java.util.List<Point2D> outer : outerContours) {
+            java.util.List<java.util.List<Point2D>> matchingHoles = new ArrayList<>();
+
+            for (java.util.List<Point2D> hole : holeContours) {
+                // Simple containment test: check if first hole point is inside outer contour
+                if (!hole.isEmpty() && pointInPolygon(hole.getFirst(), outer)) {
+                    matchingHoles.add(hole);
+                }
+            }
+
+            addLetterWithProperTriangulation(triangles, outer, matchingHoles);
         }
+    }
+
+    private boolean pointInPolygon(Point2D point, java.util.List<Point2D> polygon) {
+        int intersections = 0;
+        for (int i = 0; i < polygon.size(); i++) {
+            Point2D p1 = polygon.get(i);
+            Point2D p2 = polygon.get((i + 1) % polygon.size());
+
+            if ((p1.getY() > point.getY()) != (p2.getY() > point.getY())) {
+                double xIntersect = (p2.getX() - p1.getX()) * (point.getY() - p1.getY()) /
+                                   (p2.getY() - p1.getY()) + p1.getX();
+                if (point.getX() < xIntersect) {
+                    intersections++;
+                }
+            }
+        }
+        return (intersections % 2) == 1;
     }
 
     private void addLetterWithProperTriangulation(java.util.List<Triangle> triangles, java.util.List<Point2D> outer, java.util.List<java.util.List<Point2D>> holes) {
@@ -279,7 +331,35 @@ public class GeometryCalcs {
         double zBevel = BASE_HEIGHT + LETTER_HEIGHT;
         double bevelInset = BEVEL_DEPTH * 0.7;
 
-        // Add side walls for outer contour
+        // Pre-calculate beveled vertices for outer contour
+        Point2D center = calculateCentroid(outer);
+        double cx = center.getX() * SCALE_FACTOR;
+        double cy = -center.getY() * SCALE_FACTOR;
+
+        java.util.List<Point3D> outerTopVertices = new ArrayList<>();
+        java.util.List<Point3D> outerBevelVertices = new ArrayList<>();
+
+        for (Point2D p : outer) {
+            double x = p.getX() * SCALE_FACTOR;
+            double y = -p.getY() * SCALE_FACTOR;
+
+            outerTopVertices.add(new Point3D(x, y, zTop));
+
+            // Calculate inset position for bevel
+            double dx = cx - x;
+            double dy = cy - y;
+            double len = Math.sqrt(dx*dx + dy*dy);
+            if (len > 0.001) {
+                double bx = x + (dx/len) * bevelInset;
+                double by = y + (dy/len) * bevelInset;
+                outerBevelVertices.add(new Point3D(bx, by, zBevel));
+            } else {
+                // Degenerate case: point is at center
+                outerBevelVertices.add(new Point3D(x, y, zBevel));
+            }
+        }
+
+        // Add side walls for outer contour using pre-calculated vertices
         for (int i = 0; i < outer.size(); i++) {
             Point2D p1 = outer.get(i);
             Point2D p2 = outer.get((i + 1) % outer.size());
@@ -289,14 +369,54 @@ public class GeometryCalcs {
             double x2 = p2.getX() * SCALE_FACTOR;
             double y2 = -p2.getY() * SCALE_FACTOR;
 
-            addQuad(triangles,
-                new Point3D(x1, y1, zBase), new Point3D(x2, y2, zBase),
-                new Point3D(x2, y2, zTop), new Point3D(x1, y1, zTop),
-                null);
+            Point3D bottomP1 = new Point3D(x1, y1, zBase);
+            Point3D bottomP2 = new Point3D(x2, y2, zBase);
+            Point3D topP1 = outerTopVertices.get(i);
+            Point3D topP2 = outerTopVertices.get((i + 1) % outer.size());
+
+            addQuad(triangles, bottomP1, bottomP2, topP2, topP1, null);
         }
 
-        // Add side walls for holes
+        // Pre-calculate beveled vertices for holes
+        java.util.List<java.util.List<Point3D>> holesTopVertices = new ArrayList<>();
+        java.util.List<java.util.List<Point3D>> holesBevelVertices = new ArrayList<>();
+
         for (java.util.List<Point2D> hole : holes) {
+            Point2D holeCenter = calculateCentroid(hole);
+            double hcx = holeCenter.getX() * SCALE_FACTOR;
+            double hcy = -holeCenter.getY() * SCALE_FACTOR;
+
+            java.util.List<Point3D> holeTopVerts = new ArrayList<>();
+            java.util.List<Point3D> holeBevelVerts = new ArrayList<>();
+
+            for (Point2D p : hole) {
+                double x = p.getX() * SCALE_FACTOR;
+                double y = -p.getY() * SCALE_FACTOR;
+
+                holeTopVerts.add(new Point3D(x, y, zTop));
+
+                // For holes, inset is OUTWARD (away from hole center)
+                double dx = x - hcx;
+                double dy = y - hcy;
+                double len = Math.sqrt(dx*dx + dy*dy);
+                if (len > 0.001) {
+                    double bx = x + (dx/len) * bevelInset;
+                    double by = y + (dy/len) * bevelInset;
+                    holeBevelVerts.add(new Point3D(bx, by, zBevel));
+                } else {
+                    holeBevelVerts.add(new Point3D(x, y, zBevel));
+                }
+            }
+
+            holesTopVertices.add(holeTopVerts);
+            holesBevelVertices.add(holeBevelVerts);
+        }
+
+        // Add side walls for holes using pre-calculated vertices
+        for (int h = 0; h < holes.size(); h++) {
+            java.util.List<Point2D> hole = holes.get(h);
+            java.util.List<Point3D> holeTopVerts = holesTopVertices.get(h);
+
             for (int i = 0; i < hole.size(); i++) {
                 Point2D p1 = hole.get(i);
                 Point2D p2 = hole.get((i + 1) % hole.size());
@@ -306,11 +426,13 @@ public class GeometryCalcs {
                 double x2 = p2.getX() * SCALE_FACTOR;
                 double y2 = -p2.getY() * SCALE_FACTOR;
 
-                // Inward-facing walls
-                addQuad(triangles,
-                    new Point3D(x1, y1, zBase), new Point3D(x1, y1, zTop),
-                    new Point3D(x2, y2, zTop), new Point3D(x2, y2, zBase),
-                    null);
+                Point3D bottomP1 = new Point3D(x1, y1, zBase);
+                Point3D bottomP2 = new Point3D(x2, y2, zBase);
+                Point3D topP1 = holeTopVerts.get(i);
+                Point3D topP2 = holeTopVerts.get((i + 1) % hole.size());
+
+                // Inward-facing walls (reversed winding)
+                addQuad(triangles, bottomP1, topP1, topP2, bottomP2, null);
             }
         }
 
@@ -331,43 +453,63 @@ public class GeometryCalcs {
                 new Point3D(0, 0, -1)));
         }
 
-        // Triangulate top face with beveling
-        // For now, use simple approach for outer edge
-        Point2D center = calculateCentroid(outer);
-        double cx = center.getX() * SCALE_FACTOR;
-        double cy = -center.getY() * SCALE_FACTOR;
-
+        // Add beveled outer edge using pre-calculated vertices
         for (int i = 0; i < outer.size(); i++) {
-            Point2D p1 = outer.get(i);
-            Point2D p2 = outer.get((i + 1) % outer.size());
+            int nextI = (i + 1) % outer.size();
+            Point3D topP1 = outerTopVertices.get(i);
+            Point3D topP2 = outerTopVertices.get(nextI);
+            Point3D bevelP1 = outerBevelVertices.get(i);
+            Point3D bevelP2 = outerBevelVertices.get(nextI);
 
-            double x1 = p1.getX() * SCALE_FACTOR;
-            double y1 = -p1.getY() * SCALE_FACTOR;
-            double x2 = p2.getX() * SCALE_FACTOR;
-            double y2 = -p2.getY() * SCALE_FACTOR;
+            addQuad(triangles, topP1, topP2, bevelP2, bevelP1, null);
+        }
 
-            double dx1 = cx - x1, dy1 = cy - y1;
-            double len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
-            if (len1 > 0.001) {
-                double bx1 = x1 + (dx1/len1) * bevelInset;
-                double by1 = y1 + (dy1/len1) * bevelInset;
+        // Add beveled hole edges using pre-calculated vertices
+        for (int h = 0; h < holes.size(); h++) {
+            java.util.List<Point3D> holeTopVerts = holesTopVertices.get(h);
+            java.util.List<Point3D> holeBevelVerts = holesBevelVertices.get(h);
 
-                double dx2 = cx - x2, dy2 = cy - y2;
-                double len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
-                double bx2 = x2 + (dx2/len2) * bevelInset;
-                double by2 = y2 + (dy2/len2) * bevelInset;
+            for (int i = 0; i < holeTopVerts.size(); i++) {
+                int nextI = (i + 1) % holeTopVerts.size();
+                Point3D topP1 = holeTopVerts.get(i);
+                Point3D topP2 = holeTopVerts.get(nextI);
+                Point3D bevelP1 = holeBevelVerts.get(i);
+                Point3D bevelP2 = holeBevelVerts.get(nextI);
 
-                addQuad(triangles,
-                    new Point3D(x1, y1, zTop), new Point3D(x2, y2, zTop),
-                    new Point3D(bx2, by2, zBevel), new Point3D(bx1, by1, zBevel),
-                    null);
-
-                triangles.add(new Triangle(
-                    new Point3D(bx1, by1, zBevel),
-                    new Point3D(bx2, by2, zBevel),
-                    new Point3D(cx, cy, zBevel),
-                    new Point3D(0, 0, 1)));
+                // Reversed winding for inward-facing bevel
+                addQuad(triangles, topP1, bevelP1, bevelP2, topP2, null);
             }
+        }
+
+        // Triangulate the top beveled surface (including holes)
+        java.util.List<Point2D> bevelOuter = new ArrayList<>();
+        for (Point3D p : outerBevelVertices) {
+            bevelOuter.add(new Point2D.Double(p.x / SCALE_FACTOR, -p.y / SCALE_FACTOR));
+        }
+
+        java.util.List<java.util.List<Point2D>> bevelHoles = new ArrayList<>();
+        for (java.util.List<Point3D> holeBevelVerts : holesBevelVertices) {
+            java.util.List<Point2D> bevelHole = new ArrayList<>();
+            for (Point3D p : holeBevelVerts) {
+                bevelHole.add(new Point2D.Double(p.x / SCALE_FACTOR, -p.y / SCALE_FACTOR));
+            }
+            bevelHoles.add(bevelHole);
+        }
+
+        java.util.List<Point2D[]> topTris = triangulatePolygonWithHoles(bevelOuter, bevelHoles);
+        for (Point2D[] tri : topTris) {
+            double x1 = tri[0].getX() * SCALE_FACTOR;
+            double y1 = -tri[0].getY() * SCALE_FACTOR;
+            double x2 = tri[1].getX() * SCALE_FACTOR;
+            double y2 = -tri[1].getY() * SCALE_FACTOR;
+            double x3 = tri[2].getX() * SCALE_FACTOR;
+            double y3 = -tri[2].getY() * SCALE_FACTOR;
+
+            triangles.add(new Triangle(
+                new Point3D(x1, y1, zBevel),
+                new Point3D(x2, y2, zBevel),
+                new Point3D(x3, y3, zBevel),
+                new Point3D(0, 0, 1)));
         }
     }
 
@@ -510,19 +652,5 @@ public class GeometryCalcs {
         double nz = ux * vy - uy * vx;
         double len = Math.sqrt(nx*nx + ny*ny + nz*nz);
         return new Point3D(nx/len, ny/len, nz/len);
-    }
-
-    private int addVertex(java.util.List<Point3D> vertices, Point3D p) {
-        // Check if vertex already exists (for efficiency)
-        for (int i = 0; i < vertices.size(); i++) {
-            Point3D existing = vertices.get(i);
-            if (Math.abs(existing.x - p.x) < 0.0001 &&
-                Math.abs(existing.y - p.y) < 0.0001 &&
-                Math.abs(existing.z - p.z) < 0.0001) {
-                return i;
-            }
-        }
-        vertices.add(p);
-        return vertices.size() - 1;
     }
 }

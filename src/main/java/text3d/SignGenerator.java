@@ -12,7 +12,7 @@ import com.darwinsys.swingui.FontChooser;
 
 /**
  * 3D Sign Generator - Creates STL files with colored regions for 3D printing
- * @author Original by Claude.io, guided by Ian Darwin
+ * @author Original by Claude.ai, guided by Ian Darwin
  */
 public class SignGenerator extends JFrame {
     private final JTextArea textArea;
@@ -34,9 +34,10 @@ public class SignGenerator extends JFrame {
     private static final int RENDER_FONT_DEFAULT_SIZE = 36;
     private static final int PREVIEW_FONT_SIZE = 14;
 
-    public static final String STARTER_TEXT = "HELLO\nWORLD";
+    public static final String STARTER_TEXT = "Hello\nWORLD";
 
-    final GeometryCalcs geometry = new GeometryCalcs();
+    final TextToFile geometry =
+            new GeminiTextToFile();
 
     public record Sign(String text, Font font){
         String toJSON() {
