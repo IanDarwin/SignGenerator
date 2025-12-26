@@ -48,41 +48,27 @@ public class SignGenerator extends JFrame {
 
     public static final String STARTER_TEXT = "HELLO\nWORLD";
 
+    public record Sign(String text, Font font){
+        String toJSON() {
+            return String.format("""
+                    {
+                    "text": "%s",
+                    "font": {
+                        "name": "%s",
+                        "size": %d,
+                        "style": %d
+                        }
+                    }""",
+                    text.replaceAll("\n", "\\\\n"), font.getName(), font.getSize(), font.getStyle());
+        }
+    }
+
     public SignGenerator() {
         setTitle("3D Sign Generator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
-        JMenuBar bar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
-        var newSign = new JMenuItem("New Sign");
-        newSign.addActionListener(e -> textArea.setText(STARTER_TEXT));
-        fileMenu.add(newSign);
-        fileMenu.addSeparator();
-        var load = new JMenuItem("Load Text...");
-        load.addActionListener(e -> loadText());
-        fileMenu.add(load);
-        fileMenu.addSeparator();
-        var open = new JMenuItem("Open...");
-        open.addActionListener(e -> openFile());
-        fileMenu.add(open);
-        var save = new JMenuItem("Save");
-        save.addActionListener(e -> saveExisting());
-        fileMenu.add(save);
-        var saveAs = new JMenuItem("Save As...");
-        saveAs.addActionListener(e -> saveFileAs());
-        fileMenu.add(saveAs);
-        fileMenu.addSeparator();
-        var exit = new JMenuItem("Exit");
-        exit.addActionListener(e -> System.exit(0));
-        fileMenu.add(exit);
-        bar.add(fileMenu);
-
-        JMenu editMenu = new JMenu("Edit");
-        bar.add(editMenu);
-
-        setJMenuBar(bar);
-
+        setJMenuBar(createMenuBar());
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -134,6 +120,37 @@ public class SignGenerator extends JFrame {
         setLocationRelativeTo(null);
     }
 
+    private JMenuBar createMenuBar() {
+        JMenuBar bar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        var newSign = new JMenuItem("New Sign");
+        newSign.addActionListener(e -> textArea.setText(STARTER_TEXT));
+        fileMenu.add(newSign);
+        fileMenu.addSeparator();
+        var load = new JMenuItem("Load Text...");
+        load.addActionListener(e -> loadText());
+        fileMenu.add(load);
+        fileMenu.addSeparator();
+        var open = new JMenuItem("Open...");
+        open.addActionListener(e -> openFile());
+        fileMenu.add(open);
+        var save = new JMenuItem("Save");
+        save.addActionListener(e -> saveExisting());
+        fileMenu.add(save);
+        var saveAs = new JMenuItem("Save As...");
+        saveAs.addActionListener(e -> saveFileAs());
+        fileMenu.add(saveAs);
+        fileMenu.addSeparator();
+        var exit = new JMenuItem("Exit");
+        exit.addActionListener(e -> System.exit(0));
+        fileMenu.add(exit);
+        bar.add(fileMenu);
+
+        JMenu editMenu = new JMenu("Edit");
+        bar.add(editMenu);
+        return bar;
+    }
+
     private void changeFont() {
         FontChooser chooser = new FontChooser(this);
         chooser.setVisible(true); // Blocking
@@ -183,7 +200,18 @@ public class SignGenerator extends JFrame {
     }
 
     private void saveFileAs() {
-        System.out.println("saveFileAs: Not written yet");
+        System.out.println("saveFileAs");
+        JFileChooser fileChooser = new JFileChooser("Save Sign As");
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                final String name = fileChooser.getSelectedFile().getAbsolutePath();
+                System.out.println("name = " + name);
+                Files.writeString(Path.of(name),
+                        new Sign(textArea.getText(), renderFont).toJSON());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void updatePanels() {
@@ -505,7 +533,7 @@ public class SignGenerator extends JFrame {
                 outerCoords[i] = new Coordinate(p.getX(), p.getY());
             }
             // Close the ring
-            outerCoords[cleanOuter.size()] = new Coordinate(cleanOuter.getFirst().getX(), cleanOuter.get(0).getY());
+            outerCoords[cleanOuter.size()] = new Coordinate(cleanOuter.getFirst().getX(), cleanOuter.getFirst().getY());
 
             LinearRing shell = gf.createLinearRing(outerCoords);
 
@@ -521,7 +549,7 @@ public class SignGenerator extends JFrame {
                     holeCoords[i] = new Coordinate(p.getX(), p.getY());
                 }
                 // Close the ring
-                holeCoords[cleanHole.size()] = new Coordinate(cleanHole.getFirst().getX(), cleanHole.get(0).getY());
+                holeCoords[cleanHole.size()] = new Coordinate(cleanHole.getFirst().getX(), cleanHole.getFirst().getY());
                 holeRings[h] = gf.createLinearRing(holeCoords);
             }
 
@@ -573,7 +601,7 @@ public class SignGenerator extends JFrame {
 
         result.add(points.getFirst());
         for (int i = 1; i < points.size(); i++) {
-            Point2D prev = result.get(result.size() - 1);
+            Point2D prev = result.getLast();
             Point2D curr = points.get(i);
             double dist = prev.distance(curr);
             if (dist > tolerance) {
@@ -583,9 +611,9 @@ public class SignGenerator extends JFrame {
 
         // Check if first and last are too close
         if (result.size() > 1) {
-            double dist = result.getFirst().distance(result.get(result.size() - 1));
+            double dist = result.getFirst().distance(result.getLast());
             if (dist <= tolerance) {
-                result.remove(result.size() - 1);
+                result.removeLast();
             }
         }
 
