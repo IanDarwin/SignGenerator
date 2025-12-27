@@ -15,6 +15,7 @@ Trial and error will be your friend.
 
 == Lots more to do:
 
+* Settings from Settings dialog not honored.
 * Use Notification pattern to keep things up to date
 * Then can update display info panel when needed.
 * Move font selection to an Edit menu item, not button?
