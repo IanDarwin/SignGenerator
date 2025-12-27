@@ -1,27 +1,30 @@
-= SignGenerator
+= SignGenerator: Signs, Stamps, etc.
 
-Program to make text strings into 3d shapes e.g., signs.
-
-Project started with a Claude Code prompt (groan).
-UI mostly redone by a human.
+Program to make text strings into 3d shapes.
+Can make signs of various sizes.
+Can also make rubber stamps if you mirror the whole image
+in the slicer, and print on TPU or similar filament.
 
 == Usage & Caveats
 
 Just run it. Either type your sign text into the text box,
 or, use File->Load to load the sign text from a ".txt" file.
 
-Note: quite a few fonts have issues with the rendering code.
+Note: quite a few fonts have issues with one or another of the renderers,
+so try different fonts and both renderers until something good comes up.
+They may look funny when loaded into the slicer; slice them and look at the results before deciding.
 Trial and error will be your friend.
 
 == Lots more to do:
 
+* Test out mkinstaller on a few platforms.
 * Settings from Settings dialog not honored.
+** Settings: Defult load/save directory (~/signs)
+** Move font selection to an Edit menu item, not button?
+** Font selection: set from existing before showing dialog.
 * Use Notification pattern to keep things up to date
-* Then can update display info panel when needed.
-* Move font selection to an Edit menu item, not button?
-* Font selection: set from existing before showing dialog.
+** Then can update display info panel when needed.
 * Load/save: Add "Saved" popup to be consistent.
-* Settings: Defult load/save directory (~/signs)
 * Control for left-align, Center, right-align
 * Optional border
 * Place logos?
