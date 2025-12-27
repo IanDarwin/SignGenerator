@@ -11,7 +11,7 @@
 
 	<name>TextToSTL</name>
 	<description>
-		XXXXX
+		Generate signs or similar items in STL or 3MF for 3D printing.
 	</description>
 	<url>http://darwinsys.com/</url>
 	<licenses>
@@ -54,13 +54,12 @@
         </dependency>
 
 		<!-- HIDDEN DEPENDENCY on eu.mihosoft -->
-        <!--
+		<!-- Does NOT work on BSD (yet?) -->
 		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-graphics</artifactId>
 			<version>25-ea+21</version>
 		</dependency>
-		-->
 
         <dependency>
             <groupId>com.darwinsys</groupId>
