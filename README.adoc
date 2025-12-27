@@ -22,4 +22,5 @@ Trial and error will be your friend.
 * Load/save: Add "Saved" popup to be consistent.
 * Settings: Defult load/save directory (~/signs)
 * Control for left-align, Center, right-align
+* Optional border
 * Place logos?
