@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.awt.*;
 
+/// A single Sign object, mainly for save/open
+/// @author Ian Darwin
+///
 public record Sign(String text, String fontName, int fontSize, int fontStyle){
 
     // Secondary constructor

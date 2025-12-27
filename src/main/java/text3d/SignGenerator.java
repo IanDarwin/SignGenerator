@@ -11,11 +11,12 @@ import java.nio.file.Path;
 import com.darwinsys.swingui.FontChooser;
 
 /**
- * 3D Sign Generator - Creates STL files with colored regions for 3D printing
- * @author Original by Claude.ai, guided by Ian Darwin
+ * 3D Sign Generator - Creates STL files with colored regions for 3D printing.
+ * Sort of a View and ViewModel combined
+ * @author Mostly by Ian Darwin
  */
 public class SignGenerator extends JFrame {
-    private final JTextArea textArea;
+    final JTextArea textArea;
     private final JButton generateSTLButton, generate3MFButton;
     private final JLabel statusLabel;
     private final JPanel infoPanel;

@@ -19,8 +19,9 @@ import java.util.List;
 
 import static text3d.SignGenerator.*;
 
-/** All the geometry calculations for the Sign Generator.
- * @author Claude.io
+/**
+ * All the geometry calculations for the Sign Generator.
+ * @author Claude.ai, guided by Ian Darwin
  */
 public class ClaudeTextToFile implements TextToFile {
 

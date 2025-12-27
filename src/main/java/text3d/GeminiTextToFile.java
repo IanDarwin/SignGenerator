@@ -20,9 +20,11 @@ import java.util.*;
 import java.util.List;
 import java.util.zip.*;
 
-// Static imports for BASE_HEIGHT, LETTER_HEIGHT, BEVEL_DEPTH, BASE_MARGIN
 import static text3d.SignGenerator.*;
 
+/// Bit-twizzling as implemented by Gemini.
+/// Requires JavaFX be installed.
+/// @author Google Gemini, guided by Ian Darwin
 public class GeminiTextToFile implements TextToFile {
 
     @Override

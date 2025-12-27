@@ -6,6 +6,8 @@ import java.util.prefs.Preferences;
 
 import static text3d.SignGenerator.*;
 
+/// Settings dialog for the Sign Generator.
+///
 public class SettingsDialog extends JDialog {
 
     private final Preferences prefs = Preferences.userNodeForPackage(SettingsDialog.class);
