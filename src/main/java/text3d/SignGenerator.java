@@ -9,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.darwinsys.swingui.FontChooser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 3D Sign Generator - Creates STL files with colored regions for 3D printing
@@ -23,36 +25,30 @@ public class SignGenerator extends JFrame {
 
     // Dimensions in mm
     static final double BASE_HEIGHT = 2.0;
-    static final double LETTER_HEIGHT = 5.0;
-    static final double BEVEL_DEPTH = 0.5;
     static final double BASE_MARGIN = 5.0;
+    static final double LETTER_HEIGHT = 5.0;
+    static final double BEVEL_HEIGHT = 0.5;
     static final double SCALE_FACTOR = 0.5;
 
+    // Keys for storing/retrieving the above in Java Preferences
+        // Preferences Keys, used by Settings class
+    static final String PREF_RENDERER = "renderer";
+    static final String PREF_FONT_SIZE = "fontSize";
+    static final String PREF_BASE_HEIGHT = "baseHeight";
+    static final String PREF_BASE_MARGIN = "baseMargin";
+    static final String PREF_LETTER_HEIGHT = "letterHeight";
+    static final String PREF_BEVEL_HEIGHT = "bevelHeight";
+
     // Font settings
-    private static final String DEFAULT_FONT_NAME = "Arial";
-    private static final int DEFAULT_FONT_STYLE = Font.BOLD;
-    private static final int RENDER_FONT_DEFAULT_SIZE = 36;
-    private static final int PREVIEW_FONT_SIZE = 14;
+    static final String DEFAULT_FONT_NAME = "Arial";
+    static final int DEFAULT_FONT_STYLE = Font.BOLD;
+    static final int RENDER_FONT_DEFAULT_SIZE = 36;
+    static final int PREVIEW_FONT_SIZE = 14;
 
     public static final String STARTER_TEXT = "Hello\nWORLD";
 
     final TextToFile geometry =
             new GeminiTextToFile();
-
-    public record Sign(String text, Font font){
-        String toJSON() {
-            return String.format("""
-                    {
-                    "text": "%s",
-                    "font": {
-                        "name": "%s",
-                        "size": %d,
-                        "style": %d
-                        }
-                    }""",
-                    text.replaceAll("\n", "\\\\n"), font.getName(), font.getSize(), font.getStyle());
-        }
-    }
 
     public SignGenerator() {
         setTitle("3D Sign Generator");
@@ -141,6 +137,9 @@ public class SignGenerator extends JFrame {
 
         JMenu editMenu = new JMenu("Edit");
         bar.add(editMenu);
+        var prefsMI = new JMenuItem("Preferences");
+        editMenu.add(prefsMI);
+        prefsMI.addActionListener(e -> new SettingsDialog(this).setVisible(true));
         return bar;
     }
 
@@ -185,7 +184,19 @@ public class SignGenerator extends JFrame {
     }
 
     private void openFile() {
-        System.out.println("openFile: Not written yet");
+        JFileChooser chooser = new JFileChooser("Load sign");
+        if (JFileChooser.APPROVE_OPTION == chooser.showOpenDialog(this)) {
+            try {
+                String json = Files.readString(Path.of(chooser.getSelectedFile().getAbsolutePath()));
+                Sign sign = Sign.fromJSON(json);
+                System.out.println("sign = " + sign);
+                textArea.setText(sign.text());
+                renderFont = new Font(sign.fontName(), sign.fontStyle(), sign.fontSize());
+                previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void saveExisting() {
@@ -213,7 +224,7 @@ public class SignGenerator extends JFrame {
                         renderFont.getName(), renderFont.getSize())));
         infoPanel.add(new JLabel("Base height: " + BASE_HEIGHT + " mm"));
         infoPanel.add(new JLabel("Letter height: " + LETTER_HEIGHT + " mm"));
-        infoPanel.add(new JLabel("Bevel depth: " + BEVEL_DEPTH + " mm"));
+        infoPanel.add(new JLabel("Bevel depth: " + BEVEL_HEIGHT + " mm"));
         pack();
     }
 
@@ -241,7 +252,7 @@ public class SignGenerator extends JFrame {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    geometry.generateFile(text, renderFont, ffile, fmt);
+                    geometry.generateFile(text, renderFont, ffile, fmt, TextAlign.LEFT);
                     return null;
                 }
 
@@ -253,8 +264,8 @@ public class SignGenerator extends JFrame {
                         JOptionPane.showMessageDialog(SignGenerator.this,
                             "Model file created successfully!\n\nFor multi-color printing:\n" +
                             "1. Base: Z = 0 to " + BASE_HEIGHT + " mm\n" +
-                            "2. Letter body: Z = " + BASE_HEIGHT + " to " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_DEPTH) + " mm\n" +
-                            "3. Letter front (beveled): Z = " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_DEPTH) + " to " + (BASE_HEIGHT + LETTER_HEIGHT) + " mm",
+                            "2. Letter body: Z = " + BASE_HEIGHT + " to " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_HEIGHT) + " mm\n" +
+                            "3. Letter front (beveled): Z = " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_HEIGHT) + " to " + (BASE_HEIGHT + LETTER_HEIGHT) + " mm",
                             "Success", JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {
                         statusLabel.setText("Error: " + ex.getMessage());

@@ -25,7 +25,7 @@ import static text3d.SignGenerator.*;
 public class ClaudeTextToFile implements TextToFile {
 
     @Override
-    public void generateFile(String text, Font font, File file, OutputFormat format) throws IOException {
+    public void generateFile(String text, Font font, File file, OutputFormat format, TextAlign align) throws IOException {
         java.util.List<Shape> letterShapes = new ArrayList<>();
         String[] lines = text.split("\n");
         double currentY = 0;
@@ -327,9 +327,9 @@ public class ClaudeTextToFile implements TextToFile {
 
     private void addLetterWithProperTriangulation(java.util.List<Triangle> triangles, java.util.List<Point2D> outer, java.util.List<java.util.List<Point2D>> holes) {
         double zBase = BASE_HEIGHT;
-        double zTop = BASE_HEIGHT + LETTER_HEIGHT - BEVEL_DEPTH;
+        double zTop = BASE_HEIGHT + LETTER_HEIGHT - BEVEL_HEIGHT;
         double zBevel = BASE_HEIGHT + LETTER_HEIGHT;
-        double bevelInset = BEVEL_DEPTH * 0.7;
+        double bevelInset = BEVEL_HEIGHT * 0.7;
 
         // Pre-calculate beveled vertices for outer contour
         Point2D center = calculateCentroid(outer);

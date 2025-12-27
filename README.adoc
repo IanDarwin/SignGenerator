@@ -18,6 +18,6 @@ Trial and error will be your friend.
 * Move font selection to an Edit menu item, not button?
 * Load/save: finish save vs save as, load() to restore,
 don't forget to update both fonts. Add "Saved" popup to be consistent.
-* Settings for padding?
-* Centering, right-align?
+* Settings: Defult load/save directory (~/signs)
+* Control for left-align, Center, right-align?
 * Place logos?
