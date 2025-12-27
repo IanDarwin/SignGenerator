@@ -3,7 +3,7 @@ package text3d;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
-import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +46,15 @@ public class SignGenerator extends JFrame {
     public static final String STARTER_TEXT = "Hello\nWORLD";
 
     String signFilePath;
+
+    FileNameExtensionFilter textFilter = new FileNameExtensionFilter(
+        "Text Files", "txt", "text");
+    FileNameExtensionFilter signFilter = new FileNameExtensionFilter(
+        "SignGenerator Save Files", "sgn");
+    FileNameExtensionFilter stlFilter = new FileNameExtensionFilter(
+        "STL Files", "stl");
+    FileNameExtensionFilter threeMFFilter = new FileNameExtensionFilter(
+        "3MF Files", "3mf");
 
     final TextToFile geometry =
             new GeminiTextToFile();
@@ -153,24 +162,12 @@ public class SignGenerator extends JFrame {
         }
     }
 
-    private static class TextFileFilter extends FileFilter {
-        @Override
-        public boolean accept(File pathName) {
-            return pathName.getName().endsWith(".txt");
-        }
-
-        @Override
-        public String getDescription() {
-            return "Text filter";
-        }
-    }
-
     private void loadText() {
         System.out.println("loadText");
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Load Text");
         fileChooser.setApproveButtonText("Load sign text");
-        fileChooser.setFileFilter(new TextFileFilter());
+        fileChooser.setFileFilter(textFilter);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             Path target = fileChooser.getSelectedFile().toPath();
             try {
@@ -184,7 +181,9 @@ public class SignGenerator extends JFrame {
     }
 
     private void openFile() {
-        JFileChooser chooser = new JFileChooser("Open sign");
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Open saved sign");
+        chooser.setFileFilter(signFilter);
         if (JFileChooser.APPROVE_OPTION == chooser.showOpenDialog(this)) {
             try {
                 signFilePath = chooser.getSelectedFile().getAbsolutePath();
@@ -215,7 +214,9 @@ public class SignGenerator extends JFrame {
     }
 
     private void saveFileAs() {
-        JFileChooser fileChooser = new JFileChooser("Save Sign As");
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Save Sign As");
+        fileChooser.setFileFilter(signFilter);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
                 final String name = fileChooser.getSelectedFile().getAbsolutePath();
@@ -247,6 +248,7 @@ public class SignGenerator extends JFrame {
         }
 
         JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setFileFilter(fmt == OutputFormat.STL ? stlFilter : threeMFFilter);
         fileChooser.setDialogTitle("Save " + fmt.name() + " File");
         fileChooser.setSelectedFile(new File("sign" + fmt.ext()));
 

@@ -15,9 +15,10 @@ Trial and error will be your friend.
 
 == Lots more to do:
 
+* Use Notification pattern to keep things up to date
+* Then can update display info panel when needed.
 * Move font selection to an Edit menu item, not button?
 * Font selection: set from existing before showing dialog.
-* Use Notification pattern to keep things up to date
 * Load/save: Add "Saved" popup to be consistent.
 * Settings: Defult load/save directory (~/signs)
 * Control for left-align, Center, right-align
