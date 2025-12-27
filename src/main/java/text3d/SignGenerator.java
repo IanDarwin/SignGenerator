@@ -9,8 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import com.darwinsys.swingui.FontChooser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 3D Sign Generator - Creates STL files with colored regions for 3D printing
@@ -31,7 +29,7 @@ public class SignGenerator extends JFrame {
     static final double SCALE_FACTOR = 0.5;
 
     // Keys for storing/retrieving the above in Java Preferences
-        // Preferences Keys, used by Settings class
+    // Used by Settings class
     static final String PREF_RENDERER = "renderer";
     static final String PREF_FONT_SIZE = "fontSize";
     static final String PREF_BASE_HEIGHT = "baseHeight";
@@ -46,6 +44,8 @@ public class SignGenerator extends JFrame {
     static final int PREVIEW_FONT_SIZE = 14;
 
     public static final String STARTER_TEXT = "Hello\nWORLD";
+
+    String signFilePath;
 
     final TextToFile geometry =
             new GeminiTextToFile();
@@ -184,15 +184,16 @@ public class SignGenerator extends JFrame {
     }
 
     private void openFile() {
-        JFileChooser chooser = new JFileChooser("Load sign");
+        JFileChooser chooser = new JFileChooser("Open sign");
         if (JFileChooser.APPROVE_OPTION == chooser.showOpenDialog(this)) {
             try {
-                String json = Files.readString(Path.of(chooser.getSelectedFile().getAbsolutePath()));
+                signFilePath = chooser.getSelectedFile().getAbsolutePath();
+                String json = Files.readString(Path.of(signFilePath));
                 Sign sign = Sign.fromJSON(json);
-                System.out.println("sign = " + sign);
-                textArea.setText(sign.text());
                 renderFont = new Font(sign.fontName(), sign.fontStyle(), sign.fontSize());
                 previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
+                textArea.setFont(previewFont);
+                textArea.setText(sign.text());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -200,7 +201,17 @@ public class SignGenerator extends JFrame {
     }
 
     private void saveExisting() {
-        System.out.println("saveExisting: Not written yet");
+        if (signFilePath == null) {
+            saveFileAs();
+        }
+        else {
+            try {
+                Files.writeString(Path.of(signFilePath),
+                        new Sign(textArea.getText(), renderFont).toJSON());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void saveFileAs() {
