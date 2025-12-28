@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Sign Generator
+Comment=Simple sign/stamp generator for 3D printing
+Exec=signgenerator 
+Terminal=false
+Type=Application
+Encoding=UTF-8
+Icon=xterm-color_48x48
+Categories=Graphics;
+Keywords=signs;rubber stamps;
