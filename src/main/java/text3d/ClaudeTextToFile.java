@@ -19,18 +19,19 @@ import java.util.List;
 
 import static text3d.SignGenerator.*;
 
-/**
- * All the geometry calculations for the Sign Generator.
- * @author Claude.ai, guided by Ian Darwin
+
+/** All the geometry calculations for the Sign Generator.
+ * @author Claude.ai, prompted and iterated by Ian Darwin
  */
 public class ClaudeTextToFile implements TextToFile {
 
-    @Override
     public void generateFile(String text, Font font, File file, OutputFormat format, TextAlign align) throws IOException {
         java.util.List<Shape> letterShapes = new ArrayList<>();
         String[] lines = text.split("\n");
         double currentY = 0;
+        double maxWidth = 0;
 
+        // First pass: create shapes and find max width
         for (String line : lines) {
             if (line.trim().isEmpty()) continue;
 
@@ -38,12 +39,40 @@ public class ClaudeTextToFile implements TextToFile {
             if (lineShape != null) {
                 letterShapes.add(lineShape);
                 Rectangle2D bounds = lineShape.getBounds2D();
+                maxWidth = Math.max(maxWidth, bounds.getWidth());
                 currentY += bounds.getHeight() + 10;
             }
         }
 
         if (letterShapes.isEmpty()) {
             throw new IOException("No valid text to generate");
+        }
+
+        // Second pass: apply alignment if needed
+        if (align != TextAlign.LEFT) {
+            java.util.List<Shape> alignedShapes = new ArrayList<>();
+            currentY = 0;
+
+            for (String line : lines) {
+                if (line.trim().isEmpty()) continue;
+
+                Shape originalShape = letterShapes.get(alignedShapes.size());
+                Rectangle2D bounds = originalShape.getBounds2D();
+                double lineWidth = bounds.getWidth();
+
+                double xOffset = switch (align) {
+                    case CENTER -> (maxWidth - lineWidth) / 2;
+                    case RIGHT -> maxWidth - lineWidth;
+                    default -> 0;
+                };
+
+                Shape lineShape = createTextShape(line, font, xOffset, currentY);
+                if (lineShape != null) {
+                    alignedShapes.add(lineShape);
+                    currentY += bounds.getHeight() + 10;
+                }
+            }
+            letterShapes = alignedShapes;
         }
 
         Rectangle2D overallBounds = letterShapes.getFirst().getBounds2D();
@@ -165,6 +194,7 @@ public class ClaudeTextToFile implements TextToFile {
         return vertices.size() - 1;
     }
 
+
     private void writeSTL(List<Triangle> triangles, File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             writer.write("solid sign\n");
@@ -187,7 +217,19 @@ public class ClaudeTextToFile implements TextToFile {
         }
     }
 
+    private static class Point3D {
+        double x, y, z;
+        Point3D(double x, double y, double z) {
+            this.x = x; this.y = y; this.z = z;
+        }
+    }
 
+    private static class Triangle {
+        Point3D p1, p2, p3, normal;
+        Triangle(Point3D p1, Point3D p2, Point3D p3, Point3D normal) {
+            this.p1 = p1; this.p2 = p2; this.p3 = p3; this.normal = normal;
+        }
+    }
 
     private Shape createTextShape(String text, Font font, double x, double y) {
         BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
@@ -654,4 +696,6 @@ public class ClaudeTextToFile implements TextToFile {
         double len = Math.sqrt(nx*nx + ny*ny + nz*nz);
         return new Point3D(nx/len, ny/len, nz/len);
     }
+
+
 }
