@@ -22,6 +22,7 @@ public class SignGenerator extends JFrame {
     private final JTextArea textArea;
     private final JButton generateSTLButton, generate3MFButton;
     private final JLabel statusLabel;
+    private final JLabel fontNameLabel;
     private Font previewFont, renderFont;
 
     // Dimensions in mm
@@ -86,6 +87,8 @@ public class SignGenerator extends JFrame {
             default -> throw new IllegalStateException("Unexpected value: " + renderer);
         });
 
+        fontNameLabel = new JLabel(DEFAULT_FONT_NAME);
+
         setJMenuBar(createMenuBar());
 
         JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
@@ -120,7 +123,7 @@ public class SignGenerator extends JFrame {
         statusLabel = new JLabel("Ready to generate");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
 
-        JPanel settingsPanel = new SettingsPanel(this);
+        JPanel settingsPanel = new SettingsPanel();
 
         add(statusLabel, BorderLayout.NORTH);
         add(inputPanel, BorderLayout.WEST);
@@ -159,18 +162,17 @@ public class SignGenerator extends JFrame {
 
         JMenu editMenu = new JMenu("Edit");
         bar.add(editMenu);
-//        var prefsMI = new JMenuItem("Preferences");
-//        editMenu.add(prefsMI);
-//        prefsMI.addActionListener(e -> new SettingsDialog(this).setVisible(true));
         return bar;
     }
 
     void changeFont() {
         FontChooser chooser = new FontChooser(this);
         chooser.setVisible(true); // Blocking
-        renderFont = chooser.getSelectedFont();
-        if (renderFont != null) {
+        var chosenFont = chooser.getSelectedFont();
+        if (chosenFont != null) {
+            renderFont = chosenFont;
             previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
+            fontNameLabel.setText(renderFont.getFontName());
         }
     }
 
@@ -244,15 +246,12 @@ public class SignGenerator extends JFrame {
 	///
 	class SettingsPanel extends JPanel {
 
-		private final SignGenerator main;
-
-		public SettingsPanel(JFrame parent) {
-			main = (SignGenerator)parent;
+		public SettingsPanel() {
 			var content = this;
 
 			// Load preferences, act on some here, others later.
 			String renderer = prefs.get(PREF_RENDERER, "C");
-			main.setRenderer(switch(renderer) {
+			setRenderer(switch(renderer) {
 				case "C" -> new ClaudeTextToFile();
 				case "G" -> new GeminiTextToFile();
 				default -> throw new IllegalStateException("Unexpected value: " + renderer);
@@ -269,11 +268,11 @@ public class SignGenerator extends JFrame {
 
 			ButtonGroup rendererGroup = new ButtonGroup();
 			JRadioButton rendererClaude = new JRadioButton("Claude Renderer");
-			rendererClaude.addActionListener(e->main.setRenderer(new ClaudeTextToFile()));
+			rendererClaude.addActionListener(e->setRenderer(new ClaudeTextToFile()));
 			rendererGroup.add(rendererClaude);
 
 			JRadioButton rendererGemini = new JRadioButton("Gemini Renderer");
-			rendererGemini.addActionListener(e->main.setRenderer(new GeminiTextToFile()));
+			rendererGemini.addActionListener(e->setRenderer(new GeminiTextToFile()));
 			rendererGroup.add(rendererGemini);
 
 			if ("C".equals(renderer)) {
@@ -285,13 +284,13 @@ public class SignGenerator extends JFrame {
 			// Choice of alignment
 			ButtonGroup alignmentGroup = new ButtonGroup();
 			JRadioButton alignmentLeft = new JRadioButton("Left");
-			alignmentLeft.addActionListener(e->main.setAlignment(TextAlign.LEFT));
+			alignmentLeft.addActionListener(e->setAlignment(TextAlign.LEFT));
 			alignmentGroup.add(alignmentLeft);
 			JRadioButton alignmentCenter = new JRadioButton("Center");
-			alignmentCenter.addActionListener(e->main.setAlignment(TextAlign.CENTER));
+			alignmentCenter.addActionListener(e->setAlignment(TextAlign.CENTER));
 			alignmentGroup.add(alignmentCenter);
 			JRadioButton alignmentRight = new JRadioButton("Right");
-			alignmentRight.addActionListener(e->main.setAlignment(TextAlign.RIGHT));
+			alignmentRight.addActionListener(e->setAlignment(TextAlign.RIGHT));
 			alignmentGroup.add(alignmentRight);
 
 			JSpinner fontSizeSpinner = new JSpinner(
@@ -301,22 +300,22 @@ public class SignGenerator extends JFrame {
 			JSpinner baseHeightSpinner = new JSpinner(
 					new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
 			);
-			baseHeightSpinner.addChangeListener(e -> { main.setBaseHeight((double)baseHeightSpinner.getValue());});
+			baseHeightSpinner.addChangeListener(e -> { setBaseHeight((double)baseHeightSpinner.getValue());});
 
 			JSpinner baseMarginSpinner = new JSpinner(
 					new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
 			);
-			baseMarginSpinner.addChangeListener(e -> { main.setBaseMargin((double)baseMarginSpinner.getValue());});
+			baseMarginSpinner.addChangeListener(e -> { setBaseMargin((double)baseMarginSpinner.getValue());});
 
 			JSpinner letterHeightSpinner = new JSpinner(
 					new SpinnerNumberModel(letterHeight, 1.0, 100, 1)
 			);
-			letterHeightSpinner.addChangeListener(e -> { main.setLetterHeight((double)letterHeightSpinner.getValue());});
+			letterHeightSpinner.addChangeListener(e -> { setLetterHeight((double)letterHeightSpinner.getValue());});
 
 			JSpinner bevelHeightSpinner = new JSpinner(
 					new SpinnerNumberModel(bevelDepth, 0.1, 5.0, 0.1)
 			);
-			bevelHeightSpinner.addChangeListener(e -> { main.setBevelHeight((double)bevelHeightSpinner.getValue());});
+			bevelHeightSpinner.addChangeListener(e -> { setBevelHeight((double)bevelHeightSpinner.getValue());});
 
 			JButton doneButton = new JButton("Done");
 
@@ -341,9 +340,13 @@ public class SignGenerator extends JFrame {
 			gbc.gridy++;
 			var setFontButton = new JButton("Font");
 			content.add(setFontButton, gbc);
-			setFontButton.addActionListener(e -> main.changeFont());
+			setFontButton.addActionListener(e -> changeFont());
 			gbc.gridx = 1;
-			content.add(fontSizeSpinner, gbc);
+            var fontInfoPanel = new JPanel();
+            fontInfoPanel.add(new JLabel("Name:"));
+            fontInfoPanel.add(fontNameLabel);
+			fontInfoPanel.add(fontSizeSpinner, gbc);
+            content.add(fontInfoPanel);
 
 			// Alignment
 			// Renderer label

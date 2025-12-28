@@ -22,9 +22,6 @@ on platforms where OpenJFX is supported.
 * Test out mkinstaller on a few platforms.
 * A few Settings from Settings dialog not honored.
 ** Settings: Defult load/save directory (~/signs)
-** Move font selection to an Edit menu item, not button?
-** Font selection: set from existing before showing dialog.
-** Make SettingsDialog into SettingsPanel, add on main screen.
 * Use Observer design pattern to keep things up to date
 * Load/save: Add "Saved" popup to be consistent.
 * Optional border; optional rounded corners?
