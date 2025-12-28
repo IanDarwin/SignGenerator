@@ -8,15 +8,14 @@ import static text3d.SignGenerator.*;
 
 /// Settings dialog for the Sign Generator.
 ///
-public class SettingsDialog extends JDialog {
+public class SettingsPanel extends JPanel {
 
-    private final Preferences prefs = Preferences.userNodeForPackage(SettingsDialog.class);
+    private final Preferences prefs = Preferences.userNodeForPackage(SettingsPanel.class);
     private final SignGenerator main;
 
-    public SettingsDialog(Frame owner) {
-        super(owner, "Settings", true);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        main = (SignGenerator)owner;
+    public SettingsPanel(JFrame parent) {
+        main = (SignGenerator)parent;
+		var content = this;
 
         // Load preferences, act on some here, others later.
         String renderer = prefs.get(PREF_RENDERER, "C");
@@ -89,7 +88,7 @@ public class SettingsDialog extends JDialog {
         JButton doneButton = new JButton("Done");
 
         // Layout
-        JPanel content = new JPanel(new GridBagLayout());
+        setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(8, 8, 8, 8);
         gbc.anchor = GridBagConstraints.WEST;
@@ -107,7 +106,9 @@ public class SettingsDialog extends JDialog {
 
         gbc.gridx = 0;
         gbc.gridy++;
-        content.add(new JLabel("Font Size:"), gbc);
+        var setFontButton = new JButton("Font");
+        content.add(setFontButton, gbc);
+        setFontButton.addActionListener(e -> main.changeFont());
         gbc.gridx = 1;
         content.add(fontSizeSpinner, gbc);
 
@@ -119,11 +120,11 @@ public class SettingsDialog extends JDialog {
 
         // Renderer choice
         gbc.gridx++;
-        content.add(alignmentLeft, gbc);
-        gbc.gridx++;
-        content.add(alignmentCenter, gbc);
-        gbc.gridx++;
-        content.add(alignmentRight, gbc);
+        JPanel aligners = new JPanel();
+        aligners.add(alignmentLeft, gbc);
+        aligners.add(alignmentCenter, gbc);
+        aligners.add(alignmentRight, gbc);
+        content.add(aligners, gbc);
 
         // Gory detail values
         gbc.gridx = 0;
@@ -157,8 +158,6 @@ public class SettingsDialog extends JDialog {
         gbc.anchor = GridBagConstraints.CENTER;
         content.add(doneButton, gbc);
 
-        setContentPane(content);
-
         // Save & close
         doneButton.addActionListener(e -> {
             prefs.put(PREF_RENDERER, rendererGemini.isSelected() ? "G" : "C");
@@ -167,11 +166,7 @@ public class SettingsDialog extends JDialog {
             prefs.putDouble(PREF_BASE_MARGIN, (Double) baseMarginSpinner.getValue());
             prefs.putDouble(PREF_LETTER_HEIGHT, (Double) letterHeightSpinner.getValue());
             prefs.putDouble(PREF_BEVEL_HEIGHT, (Double) bevelHeightSpinner.getValue());
-            dispose();
         });
-
-        pack();
-        setLocationRelativeTo(owner);
     }
 
     // Example usage
@@ -179,15 +174,8 @@ public class SettingsDialog extends JDialog {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("App");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(300, 200);
-
-            JButton settingsButton = new JButton("Settings");
-            settingsButton.addActionListener(e ->
-                    new SettingsDialog(frame).setVisible(true)
-            );
-
-            frame.add(settingsButton);
-            frame.setLocationRelativeTo(null);
+            frame.add(new SettingsPanel(frame));
+			frame.pack();
             frame.setVisible(true);
         });
     }

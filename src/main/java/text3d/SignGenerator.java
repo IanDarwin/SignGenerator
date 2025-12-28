@@ -17,12 +17,12 @@ import com.darwinsys.swingui.FontChooser;
  */
 public class SignGenerator extends JFrame {
 
-    private final Preferences prefs = Preferences.userNodeForPackage(SettingsDialog.class);
+    private final Preferences prefs = Preferences.userNodeForPackage(SignGenerator.class);
 
     private final JTextArea textArea;
     private final JButton generateSTLButton, generate3MFButton;
     private final JLabel statusLabel;
-    private final JPanel infoPanel;
+    //private final JPanel infoPanel;
     private Font previewFont, renderFont;
 
     // Dimensions in mm
@@ -107,9 +107,6 @@ public class SignGenerator extends JFrame {
         renderFont = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, RENDER_FONT_DEFAULT_SIZE);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        var setFontButton = new JButton("Change font");
-        setFontButton.addActionListener(e -> changeFont());
-        buttonPanel.add(setFontButton);
 
         generateSTLButton = new JButton("Generate STL File");
         generateSTLButton.addActionListener(
@@ -124,18 +121,12 @@ public class SignGenerator extends JFrame {
         statusLabel = new JLabel("Ready to generate");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
 
-        infoPanel = new JPanel(new GridLayout(0, 1, 5, 5));
-        infoPanel.setBorder(BorderFactory.createTitledBorder("3D Print Settings"));
-        updatePanels();
+        JPanel settingsPanel = new SettingsPanel(this);
 
-        JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 10));
-        rightPanel.add(infoPanel, BorderLayout.NORTH);
-
-        add(inputPanel, BorderLayout.CENTER);
-        add(buttonPanel, BorderLayout.SOUTH);
         add(statusLabel, BorderLayout.NORTH);
-        add(rightPanel, BorderLayout.EAST);
+        add(inputPanel, BorderLayout.WEST);
+        add(settingsPanel, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
         setLocationRelativeTo(null);
@@ -169,19 +160,18 @@ public class SignGenerator extends JFrame {
 
         JMenu editMenu = new JMenu("Edit");
         bar.add(editMenu);
-        var prefsMI = new JMenuItem("Preferences");
-        editMenu.add(prefsMI);
-        prefsMI.addActionListener(e -> new SettingsDialog(this).setVisible(true));
+//        var prefsMI = new JMenuItem("Preferences");
+//        editMenu.add(prefsMI);
+//        prefsMI.addActionListener(e -> new SettingsDialog(this).setVisible(true));
         return bar;
     }
 
-    private void changeFont() {
+    void changeFont() {
         FontChooser chooser = new FontChooser(this);
         chooser.setVisible(true); // Blocking
         renderFont = chooser.getSelectedFont();
         if (renderFont != null) {
             previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
-            updatePanels();
         }
     }
 
@@ -251,18 +241,6 @@ public class SignGenerator extends JFrame {
         }
     }
 
-    private void updatePanels() {
-        textArea.setFont(previewFont);
-        infoPanel.removeAll();
-        infoPanel.add(new JLabel(
-                String.format("Font: %s Bold Size %dpt",
-                        renderFont.getName(), renderFont.getSize())));
-        infoPanel.add(new JLabel("Base height: " + baseHeight + " mm"));
-        infoPanel.add(new JLabel("Letter height: " + letterHeight + " mm"));
-        infoPanel.add(new JLabel("Bevel depth: " + bevelHeight + " mm"));
-        pack();
-    }
-
     private void generate(OutputFormat fmt, JButton generateButton) {
         String text = textArea.getText().trim();
         if (text.isEmpty()) {
@@ -311,7 +289,6 @@ public class SignGenerator extends JFrame {
                         ex.printStackTrace();
                     } finally {
                         generateButton.setEnabled(true);
-                        updatePanels();
                     }
                 }
             };
