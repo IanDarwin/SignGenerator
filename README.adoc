@@ -24,9 +24,7 @@ on platforms where OpenJFX is supported.
 ** Settings: Defult load/save directory (~/signs)
 ** Move font selection to an Edit menu item, not button?
 ** Font selection: set from existing before showing dialog.
-* Use Notification pattern to keep things up to date
-** Then can update display info panel when needed.
+* Use Observer design pattern to keep things up to date
 * Load/save: Add "Saved" popup to be consistent.
-* Control for left-align, Center, right-align
-* Optional border
+* Optional border; optional rounded corners?
 * Place logos?
