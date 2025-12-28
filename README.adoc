@@ -14,6 +14,8 @@ Note: quite a few fonts have issues with one or another of the renderers,
 so try different fonts and both renderers until something good comes up.
 They may look funny when loaded into the slicer; slice them and look at the results before deciding.
 Trial and error will be your friend.
+Aside: the Gemini renderer has a hidden dependency on OpenJFX (JavaFX) so it will only work
+on platforms where OpenJFX is supported.
 
 == Lots more to do:
 
