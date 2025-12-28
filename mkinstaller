@@ -4,7 +4,7 @@
 # Note there are now two different 'jpackage-maven-plugin' plugins,
 # so this could eventually be moved into the Maven pom.xml file.
 
-RELEASE_VERSION=1.1.0	# DRY? Keep in sync with pom file
+RELEASE_VERSION=0.0.1	# DRY? Keep in sync with pom file
 
 USAGE="$0 [-t installer-type] [-v]"
 
@@ -24,7 +24,7 @@ case $(uname) in
 			;;
 	Linux)		inst_format="rpm deb"
 			icon_format=png
-			OS_SPECIFIC="--linux-shortcut --linux-menu-group Office --linux-app-category Office --resource-dir unixlinux"
+			OS_SPECIFIC="--linux-shortcut --linux-menu-group Graphics --linux-app-category Graphics --resource-dir unixlinux"
 			;;
 	*)
 			echo "Don't know how to package for this OS, sorry.";
