@@ -33,6 +33,8 @@ public class SettingsDialog extends JDialog {
 
         // GUI Components
 
+        // Choice of Renderer
+
         ButtonGroup rendererGroup = new ButtonGroup();
         JRadioButton rendererClaude = new JRadioButton("Claude Renderer");
         rendererClaude.addActionListener(e->main.setRenderer(new ClaudeTextToFile()));
@@ -47,6 +49,18 @@ public class SettingsDialog extends JDialog {
         } else {
             rendererGemini.setSelected(true);
         }
+
+        // Choice of alignment
+        ButtonGroup alignmentGroup = new ButtonGroup();
+        JRadioButton alignmentLeft = new JRadioButton("Left");
+        alignmentLeft.addActionListener(e->main.setAlignment(TextAlign.LEFT));
+        alignmentGroup.add(alignmentLeft);
+        JRadioButton alignmentCenter = new JRadioButton("Center");
+        alignmentCenter.addActionListener(e->main.setAlignment(TextAlign.CENTER));
+        alignmentGroup.add(alignmentCenter);
+        JRadioButton alignmentRight = new JRadioButton("Right");
+        alignmentRight.addActionListener(e->main.setAlignment(TextAlign.RIGHT));
+        alignmentGroup.add(alignmentRight);
 
         JSpinner fontSizeSpinner = new JSpinner(
                 new SpinnerNumberModel(fontSize, 1, 200, 1)
@@ -97,6 +111,21 @@ public class SettingsDialog extends JDialog {
         gbc.gridx = 1;
         content.add(fontSizeSpinner, gbc);
 
+        // Alignment
+        // Renderer label
+        gbc.gridx = 0;
+        gbc.gridy++;
+        content.add(new JLabel("Alignment"), gbc);
+
+        // Renderer choice
+        gbc.gridx++;
+        content.add(alignmentLeft, gbc);
+        gbc.gridx++;
+        content.add(alignmentCenter, gbc);
+        gbc.gridx++;
+        content.add(alignmentRight, gbc);
+
+        // Gory detail values
         gbc.gridx = 0;
         gbc.gridy++;
         content.add(new JLabel("Base height (mm):"), gbc);

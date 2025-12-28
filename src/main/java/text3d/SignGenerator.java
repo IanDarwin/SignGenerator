@@ -32,6 +32,7 @@ public class SignGenerator extends JFrame {
     static final double DEFAULT_BEVEL_HEIGHT = 0.5;
 
     double baseHeight, baseMargin , letterHeight, bevelHeight;
+    TextAlign textAlignment;
     static final double SCALE_FACTOR = 0.5;
 
     // Keys for storing/retrieving the above in Java Preferences
@@ -42,6 +43,7 @@ public class SignGenerator extends JFrame {
     static final String PREF_BASE_MARGIN = "baseMargin";
     static final String PREF_LETTER_HEIGHT = "letterHeight";
     static final String PREF_BEVEL_HEIGHT = "bevelHeight";
+    static final String PREF_ALIGNMENT = "alignment";
 
     // Font settings
     static final String DEFAULT_FONT_NAME = "Arial";
@@ -76,6 +78,7 @@ public class SignGenerator extends JFrame {
         baseMargin = prefs.getDouble(PREF_BASE_MARGIN, DEFAULT_BASE_MARGIN);
         letterHeight = prefs.getDouble(PREF_LETTER_HEIGHT, DEFAULT_LETTER_HEIGHT);
         bevelHeight = prefs.getDouble(PREF_BEVEL_HEIGHT, DEFAULT_BEVEL_HEIGHT);
+        textAlignment = TextAlign.values()[prefs.getInt(PREF_ALIGNMENT, TextAlign.LEFT.ordinal())];
 
         String renderer = prefs.get(PREF_RENDERER, "C");
         setRenderer(switch(renderer) {
@@ -285,7 +288,7 @@ public class SignGenerator extends JFrame {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    renderer.generateFile(text, renderFont, ffile, fmt, TextAlign.LEFT);
+                    renderer.generateFile(text, renderFont, ffile, fmt, textAlignment);
                     return null;
                 }
 
@@ -329,4 +332,8 @@ public class SignGenerator extends JFrame {
     void setLetterHeight(double letterHeight) { this.letterHeight = letterHeight; }
 
     void setBevelHeight(double bevelHeight) { this.bevelHeight = bevelHeight; }
+
+    public void setAlignment(TextAlign textAlignment) {
+        this.textAlignment = textAlignment;
+    }
 }
