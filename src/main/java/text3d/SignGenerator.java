@@ -2,11 +2,11 @@ package text3d;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.prefs.Preferences;
 
 import com.darwinsys.swingui.FontChooser;
 
@@ -16,17 +16,22 @@ import com.darwinsys.swingui.FontChooser;
  * @author Mostly by Ian Darwin
  */
 public class SignGenerator extends JFrame {
-    final JTextArea textArea;
+
+    private final Preferences prefs = Preferences.userNodeForPackage(SettingsDialog.class);
+
+    private final JTextArea textArea;
     private final JButton generateSTLButton, generate3MFButton;
     private final JLabel statusLabel;
     private final JPanel infoPanel;
     private Font previewFont, renderFont;
 
     // Dimensions in mm
-    static final double BASE_HEIGHT = 2.0;
-    static final double BASE_MARGIN = 5.0;
-    static final double LETTER_HEIGHT = 5.0;
-    static final double BEVEL_HEIGHT = 0.5;
+    static final double DEFAULT_BASE_HEIGHT = 2.0;
+    static final double DEFAULT_BASE_MARGIN = 5.0;
+    static final double DEFAULT_LETTER_HEIGHT = 5.0;
+    static final double DEFAULT_BEVEL_HEIGHT = 0.5;
+
+    double baseHeight, baseMargin , letterHeight, bevelHeight;
     static final double SCALE_FACTOR = 0.5;
 
     // Keys for storing/retrieving the above in Java Preferences
@@ -44,6 +49,7 @@ public class SignGenerator extends JFrame {
     static final int RENDER_FONT_DEFAULT_SIZE = 36;
     static final int PREVIEW_FONT_SIZE = 14;
 
+    // Chosen to be short but exercise both upper and lower case
     public static final String STARTER_TEXT = "Hello\nWORLD";
 
     String signFilePath;
@@ -57,13 +63,26 @@ public class SignGenerator extends JFrame {
     FileNameExtensionFilter threeMFFilter = new FileNameExtensionFilter(
         "3MF Files", "3mf");
 
-    final TextToFile geometry =
+    TextToFile renderer =
             new GeminiTextToFile();
 
     public SignGenerator() {
         setTitle("3D Sign Generator");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
+
+        // Get defaults from prefs
+        baseHeight = prefs.getDouble(PREF_BASE_HEIGHT, DEFAULT_BASE_HEIGHT);
+        baseMargin = prefs.getDouble(PREF_BASE_MARGIN, DEFAULT_BASE_MARGIN);
+        letterHeight = prefs.getDouble(PREF_LETTER_HEIGHT, DEFAULT_LETTER_HEIGHT);
+        bevelHeight = prefs.getDouble(PREF_BEVEL_HEIGHT, DEFAULT_BEVEL_HEIGHT);
+
+        String renderer = prefs.get(PREF_RENDERER, "C");
+        setRenderer(switch(renderer) {
+            case "C" -> new ClaudeTextToFile();
+            case "G" -> new GeminiTextToFile();
+            default -> throw new IllegalStateException("Unexpected value: " + renderer);
+        });
 
         setJMenuBar(createMenuBar());
 
@@ -235,9 +254,9 @@ public class SignGenerator extends JFrame {
         infoPanel.add(new JLabel(
                 String.format("Font: %s Bold Size %dpt",
                         renderFont.getName(), renderFont.getSize())));
-        infoPanel.add(new JLabel("Base height: " + BASE_HEIGHT + " mm"));
-        infoPanel.add(new JLabel("Letter height: " + LETTER_HEIGHT + " mm"));
-        infoPanel.add(new JLabel("Bevel depth: " + BEVEL_HEIGHT + " mm"));
+        infoPanel.add(new JLabel("Base height: " + baseHeight + " mm"));
+        infoPanel.add(new JLabel("Letter height: " + letterHeight + " mm"));
+        infoPanel.add(new JLabel("Bevel depth: " + bevelHeight + " mm"));
         pack();
     }
 
@@ -266,7 +285,7 @@ public class SignGenerator extends JFrame {
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    geometry.generateFile(text, renderFont, ffile, fmt, TextAlign.LEFT);
+                    renderer.generateFile(text, renderFont, ffile, fmt, TextAlign.LEFT);
                     return null;
                 }
 
@@ -277,9 +296,9 @@ public class SignGenerator extends JFrame {
                         statusLabel.setText("Output file generated successfully: " + ffile.getName());
                         JOptionPane.showMessageDialog(SignGenerator.this,
                             "Model file created successfully!\n\nFor multi-color printing:\n" +
-                            "1. Base: Z = 0 to " + BASE_HEIGHT + " mm\n" +
-                            "2. Letter body: Z = " + BASE_HEIGHT + " to " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_HEIGHT) + " mm\n" +
-                            "3. Letter front (beveled): Z = " + (BASE_HEIGHT + LETTER_HEIGHT - BEVEL_HEIGHT) + " to " + (BASE_HEIGHT + LETTER_HEIGHT) + " mm",
+                            "1. Base: Z = 0 to " + baseHeight + " mm\n" +
+                            "2. Letter body: Z = " + baseHeight + " to " + (baseHeight + DEFAULT_LETTER_HEIGHT - DEFAULT_BEVEL_HEIGHT) + " mm\n" +
+                            "3. Letter front (beveled): Z = " + (baseHeight + DEFAULT_LETTER_HEIGHT - DEFAULT_BEVEL_HEIGHT) + " to " + (baseHeight + DEFAULT_LETTER_HEIGHT) + " mm",
                             "Success", JOptionPane.INFORMATION_MESSAGE);
                     } catch (Exception ex) {
                         statusLabel.setText("Error: " + ex.getMessage());
@@ -289,10 +308,25 @@ public class SignGenerator extends JFrame {
                         ex.printStackTrace();
                     } finally {
                         generateButton.setEnabled(true);
+                        updatePanels();
                     }
                 }
             };
             worker.execute();
         }
     }
+
+    ///  SIMPLE ACCESSORS
+
+    JTextArea textArea() { return textArea; }
+
+    void setRenderer(TextToFile renderer) { this.renderer = renderer; }
+
+    void setBaseHeight(double baseHeight) { this.baseHeight = baseHeight; }
+
+    void setBaseMargin(double baseMargin) { this.baseMargin = baseMargin; }
+
+    void setLetterHeight(double letterHeight) { this.letterHeight = letterHeight; }
+
+    void setBevelHeight(double bevelHeight) { this.bevelHeight = bevelHeight; }
 }

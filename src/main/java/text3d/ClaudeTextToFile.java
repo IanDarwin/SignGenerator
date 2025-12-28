@@ -52,10 +52,10 @@ public class ClaudeTextToFile implements TextToFile {
         }
 
         Rectangle2D baseBounds = new Rectangle2D.Double(
-            overallBounds.getX() - BASE_MARGIN,
-            overallBounds.getY() - BASE_MARGIN,
-            overallBounds.getWidth() + 2 * BASE_MARGIN,
-            overallBounds.getHeight() + 2 * BASE_MARGIN
+            overallBounds.getX() - DEFAULT_BASE_MARGIN,
+            overallBounds.getY() - DEFAULT_BASE_MARGIN,
+            overallBounds.getWidth() + 2 * DEFAULT_BASE_MARGIN,
+            overallBounds.getHeight() + 2 * DEFAULT_BASE_MARGIN
         );
 
         java.util.List<Triangle> triangles = new ArrayList<>();
@@ -205,7 +205,7 @@ public class ClaudeTextToFile implements TextToFile {
         double x2 = (bounds.getX() + bounds.getWidth()) * SCALE_FACTOR;
         double y2 = -(bounds.getY() + bounds.getHeight()) * SCALE_FACTOR;
         double z0 = 0;
-        double z1 = BASE_HEIGHT;
+        double z1 = DEFAULT_BASE_HEIGHT;
 
         addQuad(triangles,
             new Point3D(x1, y1, z0), new Point3D(x2, y1, z0),
@@ -327,10 +327,10 @@ public class ClaudeTextToFile implements TextToFile {
     }
 
     private void addLetterWithProperTriangulation(java.util.List<Triangle> triangles, java.util.List<Point2D> outer, java.util.List<java.util.List<Point2D>> holes) {
-        double zBase = BASE_HEIGHT;
-        double zTop = BASE_HEIGHT + LETTER_HEIGHT - BEVEL_HEIGHT;
-        double zBevel = BASE_HEIGHT + LETTER_HEIGHT;
-        double bevelInset = BEVEL_HEIGHT * 0.7;
+        double zBase = DEFAULT_BASE_HEIGHT;
+        double zTop = DEFAULT_BASE_HEIGHT + DEFAULT_LETTER_HEIGHT - DEFAULT_BEVEL_HEIGHT;
+        double zBevel = DEFAULT_BASE_HEIGHT + DEFAULT_LETTER_HEIGHT;
+        double bevelInset = DEFAULT_BEVEL_HEIGHT * 0.7;
 
         // Pre-calculate beveled vertices for outer contour
         Point2D center = calculateCentroid(outer);

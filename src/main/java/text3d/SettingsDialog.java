@@ -11,25 +11,35 @@ import static text3d.SignGenerator.*;
 public class SettingsDialog extends JDialog {
 
     private final Preferences prefs = Preferences.userNodeForPackage(SettingsDialog.class);
+    private final SignGenerator main;
 
     public SettingsDialog(Frame owner) {
         super(owner, "Settings", true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        main = (SignGenerator)owner;
 
-        // Load preferences
+        // Load preferences, act on some here, others later.
         String renderer = prefs.get(PREF_RENDERER, "C");
+        main.setRenderer(switch(renderer) {
+            case "C" -> new ClaudeTextToFile();
+            case "G" -> new GeminiTextToFile();
+            default -> throw new IllegalStateException("Unexpected value: " + renderer);
+        });
         int fontSize = prefs.getInt(PREF_FONT_SIZE, 36);
-        double baseHeight = prefs.getDouble(PREF_BASE_HEIGHT, BASE_HEIGHT);
-        double baseMargin = prefs.getDouble(PREF_BASE_MARGIN, BASE_MARGIN);
-        double letterHeight = prefs.getDouble(PREF_LETTER_HEIGHT, LETTER_HEIGHT);
-        double bevelDepth = prefs.getDouble(PREF_BEVEL_HEIGHT, BEVEL_HEIGHT);
+        double baseHeight = prefs.getDouble(PREF_BASE_HEIGHT, DEFAULT_BASE_HEIGHT);
+        double baseMargin = prefs.getDouble(PREF_BASE_MARGIN, DEFAULT_BASE_MARGIN);
+        double letterHeight = prefs.getDouble(PREF_LETTER_HEIGHT, DEFAULT_LETTER_HEIGHT);
+        double bevelDepth = prefs.getDouble(PREF_BEVEL_HEIGHT, DEFAULT_BEVEL_HEIGHT);
 
-        // Components
-        JRadioButton rendererClaude = new JRadioButton("Claude Renderer");
-        JRadioButton rendererGemini = new JRadioButton("Gemini Renderer");
+        // GUI Components
 
         ButtonGroup rendererGroup = new ButtonGroup();
+        JRadioButton rendererClaude = new JRadioButton("Claude Renderer");
+        rendererClaude.addActionListener(e->main.setRenderer(new ClaudeTextToFile()));
         rendererGroup.add(rendererClaude);
+
+        JRadioButton rendererGemini = new JRadioButton("Gemini Renderer");
+        rendererGemini.addActionListener(e->main.setRenderer(new GeminiTextToFile()));
         rendererGroup.add(rendererGemini);
 
         if ("C".equals(renderer)) {
@@ -45,18 +55,22 @@ public class SettingsDialog extends JDialog {
         JSpinner baseHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
         );
+        baseHeightSpinner.addChangeListener(e -> { main.setBaseHeight((double)baseHeightSpinner.getValue());});
 
         JSpinner baseMarginSpinner = new JSpinner(
                 new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
         );
+        baseMarginSpinner.addChangeListener(e -> { main.setBaseMargin((double)baseMarginSpinner.getValue());});
 
         JSpinner letterHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(letterHeight, 1.0, 100, 1)
         );
+        letterHeightSpinner.addChangeListener(e -> { main.setLetterHeight((double)letterHeightSpinner.getValue());});
 
         JSpinner bevelHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(bevelDepth, 0.1, 5.0, 0.1)
         );
+        bevelHeightSpinner.addChangeListener(e -> { main.setBevelHeight((double)bevelHeightSpinner.getValue());});
 
         JButton doneButton = new JButton("Done");
 
@@ -71,10 +85,9 @@ public class SettingsDialog extends JDialog {
         gbc.gridy = 0;
         content.add(new JLabel("Renderer:"), gbc);
 
-        // Renderer options
+        // Renderer choice
         gbc.gridx = 1;
         content.add(rendererClaude, gbc);
-
         gbc.gridy++;
         content.add(rendererGemini, gbc);
 

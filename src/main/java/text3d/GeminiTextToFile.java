@@ -34,7 +34,7 @@ public class GeminiTextToFile implements TextToFile {
         if (fullLetterPolys.isEmpty()) return;
 
         // Inset for the colored face and subtraction for the border rim
-        List<org.locationtech.jts.geom.Polygon> insetPolys = insetPolygons(fullLetterPolys, -BEVEL_HEIGHT);
+        List<org.locationtech.jts.geom.Polygon> insetPolys = insetPolygons(fullLetterPolys, - DEFAULT_BEVEL_HEIGHT);
         List<org.locationtech.jts.geom.Polygon> borderPolys = subtractPolygons(fullLetterPolys, insetPolys);
 
         // Calculate total bounds for the base plate
@@ -43,22 +43,22 @@ public class GeminiTextToFile implements TextToFile {
 
         // 2. Build the Base Plate
         // JCSG Cube is centered at 0,0,0. We move Z up by half its height so bottom is at Z=0.
-        double baseW = env.getWidth() + (BASE_MARGIN * 2);
-        double baseH = env.getHeight() + (BASE_MARGIN * 2);
-        CSG basePlate = new Cube(baseW, baseH, BASE_HEIGHT).toCSG();
+        double baseW = env.getWidth() + (DEFAULT_BASE_MARGIN * 2);
+        double baseH = env.getHeight() + (DEFAULT_BASE_MARGIN * 2);
+        CSG basePlate = new Cube(baseW, baseH, DEFAULT_BASE_HEIGHT).toCSG();
 
         double cx = env.getMinX() + env.getWidth() / 2.0;
         double cy = env.getMinY() + env.getHeight() / 2.0;
-        basePlate = basePlate.transformed(Transform.unity().translate(cx, cy, BASE_HEIGHT / 2.0));
+        basePlate = basePlate.transformed(Transform.unity().translate(cx, cy, DEFAULT_BASE_HEIGHT / 2.0));
 
         // 3. Build the Letter Components
-        Transform textRise = Transform.unity().translateZ(BASE_HEIGHT);
+        Transform textRise = Transform.unity().translateZ(DEFAULT_BASE_HEIGHT);
 
         // Body: The bottom part of the letters (stalk)
-        CSG letterBody = createExtrusion(fullLetterPolys, LETTER_HEIGHT - 1.0).transformed(textRise);
+        CSG letterBody = createExtrusion(fullLetterPolys, DEFAULT_LETTER_HEIGHT - 1.0).transformed(textRise);
 
         // Top: The Rim (same color as body) and Inlay (different color)
-        Transform topRise = textRise.translateZ(LETTER_HEIGHT - 1.0);
+        Transform topRise = textRise.translateZ(DEFAULT_LETTER_HEIGHT - 1.0);
         CSG letterRim = createExtrusion(borderPolys, 1.0).transformed(topRise);
         CSG letterInlay = createExtrusion(insetPolys, 1.0).transformed(topRise);
 
