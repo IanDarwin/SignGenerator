@@ -19,10 +19,13 @@ public class SignGenerator extends JFrame {
 
     private final Preferences prefs = Preferences.userNodeForPackage(SignGenerator.class);
 
-    private final JTextArea textArea;
+    // GUI Controls
+    final JTextArea textArea;
     private final JButton generateSTLButton, generate3MFButton;
     private final JLabel statusLabel;
     private final JLabel fontNameLabel;
+    private JSpinner fontSizeSpinner, baseHeightSpinner, baseMarginSpinner, letterHeightSpinner, bevelHeightSpinner;
+    private JRadioButton alignmentLeft, alignmentCenter, alignmentRight;
     private Font previewFont, renderFont;
 
     // DEFAULT Dimensions in mm
@@ -147,42 +150,36 @@ public class SignGenerator extends JFrame {
 
         // Choice of alignment
         ButtonGroup alignmentGroup = new ButtonGroup();
-        JRadioButton alignmentLeft = new JRadioButton("Left");
+        alignmentLeft = new JRadioButton("Left");
         alignmentLeft.addActionListener(e->setAlignment(TextAlign.LEFT));
         alignmentGroup.add(alignmentLeft);
-        JRadioButton alignmentCenter = new JRadioButton("Center");
+        alignmentCenter = new JRadioButton("Center");
         alignmentCenter.addActionListener(e->setAlignment(TextAlign.CENTER));
         alignmentGroup.add(alignmentCenter);
-        JRadioButton alignmentRight = new JRadioButton("Right");
+        alignmentRight = new JRadioButton("Right");
         alignmentRight.addActionListener(e->setAlignment(TextAlign.RIGHT));
         alignmentGroup.add(alignmentRight);
-        switch(textAlignment) {
-            case LEFT: alignmentLeft.setSelected(true); break;
-            case CENTER: alignmentCenter.setSelected(true); break;
-            case RIGHT: alignmentRight.setSelected(true); break;
-            default: throw new IllegalStateException("Unknown text alignment");
-        }
 
-        JSpinner fontSizeSpinner = new JSpinner(
+        fontSizeSpinner = new JSpinner(
                 new SpinnerNumberModel(fontSize, 1, 200, 1)
         );
 
-        JSpinner baseHeightSpinner = new JSpinner(
+        baseHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
         );
         baseHeightSpinner.addChangeListener(e -> { setBaseHeight((double)baseHeightSpinner.getValue());});
 
-        JSpinner baseMarginSpinner = new JSpinner(
+        baseMarginSpinner = new JSpinner(
                 new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
         );
         baseMarginSpinner.addChangeListener(e -> { setBaseMargin((double)baseMarginSpinner.getValue());});
 
-        JSpinner letterHeightSpinner = new JSpinner(
+        letterHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(letterHeight, 1.0, 100, 1)
         );
         letterHeightSpinner.addChangeListener(e -> { setLetterHeight((double)letterHeightSpinner.getValue());});
 
-        JSpinner bevelHeightSpinner = new JSpinner(
+        bevelHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(bevelHeight, 0.1, 5.0, 0.1)
         );
         bevelHeightSpinner.addChangeListener(e -> { setBevelHeight((double)bevelHeightSpinner.getValue());});
@@ -255,18 +252,7 @@ public class SignGenerator extends JFrame {
         gbc.gridx = 1;
         settingsPanel.add(bevelHeightSpinner, gbc);
 
-        // Save & close - no longer needed
-        if (false) {
-            prefs.put(PREF_RENDERER, rendererGemini.isSelected() ? "G" : "C");
-            prefs.put(PREF_FONT_NAME, fontName);
-            prefs.putInt(PREF_FONT_SIZE, (Integer) fontSizeSpinner.getValue());
-            prefs.putDouble(PREF_BASE_HEIGHT, (Double) baseHeightSpinner.getValue());
-            prefs.putDouble(PREF_BASE_MARGIN, (Double) baseMarginSpinner.getValue());
-            prefs.putDouble(PREF_LETTER_HEIGHT, (Double) letterHeightSpinner.getValue());
-            prefs.putDouble(PREF_BEVEL_HEIGHT, (Double) bevelHeightSpinner.getValue());
-        };
-
-
+        // NOW PUT IT ALL TOGETHER:
         add(statusLabel, BorderLayout.NORTH);
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                                    inputPanel, settingsPanel);
@@ -274,9 +260,22 @@ public class SignGenerator extends JFrame {
         splitPane.setDividerLocation(400);
         add(splitPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
-
         pack();
-        setLocationRelativeTo(null);
+    }
+
+    void updateSettingsPanel() {
+        fontNameLabel.setText(renderFont.getName());
+        fontSizeSpinner.setValue(renderFont.getSize());
+        switch(textAlignment) {
+            case LEFT: alignmentLeft.setSelected(true); break;
+            case CENTER: alignmentCenter.setSelected(true); break;
+            case RIGHT: alignmentRight.setSelected(true); break;
+            default: throw new IllegalStateException("Unknown text alignment");
+        }
+        baseHeightSpinner.setValue(baseHeight);
+        baseMarginSpinner.setValue(baseMargin);
+        letterHeightSpinner.setValue(letterHeight);
+        bevelHeightSpinner.setValue(bevelHeight);
     }
 
     private JMenuBar createMenuBar() {
@@ -353,6 +352,12 @@ public class SignGenerator extends JFrame {
                 previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
                 textArea.setFont(previewFont);
                 textArea.setText(sign.text());
+                textAlignment = sign.alignment();
+                setBaseHeight(sign.baseHeight());
+                setBaseMargin(sign.baseMargin());
+                setLetterHeight(sign.letterHeight());
+                setBevelHeight(sign.bevelHeight());
+                updateSettingsPanel();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -446,19 +451,40 @@ public class SignGenerator extends JFrame {
         }
     }
 
-    ///  SIMPLE ACCESSORS
+    ///  NOT-SO-SIMPLE ACCESSORS
 
     JTextArea textArea() { return textArea; }
 
-    void setRenderer(TextToFile renderer) { this.renderer = renderer; }
+    void setRenderer(TextToFile renderer) {
+        this.renderer = renderer;
+        prefs.put(PREF_RENDERER, String.valueOf(renderer.getClass().getSimpleName().charAt(0)));
+    }
 
-    void setBaseHeight(double baseHeight) { this.baseHeight = baseHeight; }
+    // Overrides setFont() in AWT but we never call it on the main class so OK
+    public void setFont(Font font) {
+        // this.font = font;
+        prefs.put(PREF_FONT_NAME, font.getName());
+    }
 
-    void setBaseMargin(double baseMargin) { this.baseMargin = baseMargin; }
+    void setBaseHeight(double baseHeight) {
+        this.baseHeight = baseHeight;
+        prefs.putDouble(PREF_BASE_HEIGHT, baseHeight);
+    }
 
-    void setLetterHeight(double letterHeight) { this.letterHeight = letterHeight; }
+    void setBaseMargin(double baseMargin) {
+        this.baseMargin = baseMargin;
+        prefs.putDouble(PREF_BASE_MARGIN, baseMargin);
+    }
 
-    void setBevelHeight(double bevelHeight) { this.bevelHeight = bevelHeight; }
+    void setLetterHeight(double letterHeight) {
+        this.letterHeight = letterHeight;
+        prefs.putDouble(PREF_LETTER_HEIGHT, letterHeight);
+    }
+
+    void setBevelHeight(double bevelHeight) {
+        this.bevelHeight = bevelHeight;
+        prefs.putDouble(PREF_BEVEL_HEIGHT, bevelHeight);
+    }
 
     public void setAlignment(TextAlign textAlignment) {
         this.textAlignment = textAlignment;
