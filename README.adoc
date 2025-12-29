@@ -21,8 +21,6 @@ on platforms where OpenJFX is supported.
 == Lots more to do:
 
 * Test out mkinstaller on Windoze and Linux platforms.
-* Many Settings from Settings panel not actually honored.
-** Settings: Defult load/save directory (~/signs)
 * Load/save: Add confirming popup to be consistent.
 * Optional border
 * Optional rounded corners?
