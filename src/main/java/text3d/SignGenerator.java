@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.prefs.Preferences;
@@ -76,6 +77,8 @@ public class SignGenerator extends JFrame {
 
     public SignGenerator() {
         setTitle("3D Sign Generator");
+        URL imageURL = getClass().getResource("/images/icon.png");
+        setIconImage(Toolkit.getDefaultToolkit().getImage(imageURL));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout(10, 10));
 
