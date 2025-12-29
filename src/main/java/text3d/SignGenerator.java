@@ -25,13 +25,19 @@ public class SignGenerator extends JFrame {
     private final JLabel fontNameLabel;
     private Font previewFont, renderFont;
 
-    // Dimensions in mm
+    // DEFAULT Dimensions in mm
     static final double DEFAULT_BASE_HEIGHT = 2.0;
     static final double DEFAULT_BASE_MARGIN = 5.0;
     static final double DEFAULT_LETTER_HEIGHT = 5.0;
     static final double DEFAULT_BEVEL_HEIGHT = 0.5;
 
-    double baseHeight, baseMargin , letterHeight, bevelHeight;
+    // DEFAULT Font settings
+    static final String DEFAULT_FONT_NAME = "Arial";
+    static final int DEFAULT_FONT_STYLE = Font.BOLD;
+    static final int RENDER_FONT_DEFAULT_SIZE = 36;
+    static final int PREVIEW_FONT_SIZE = 14;
+
+    double baseHeight, baseMargin, letterHeight, bevelHeight;
     TextAlign textAlignment;
     static final double SCALE_FACTOR = 0.5;
 
@@ -44,12 +50,6 @@ public class SignGenerator extends JFrame {
     static final String PREF_LETTER_HEIGHT = "letterHeight";
     static final String PREF_BEVEL_HEIGHT = "bevelHeight";
     static final String PREF_ALIGNMENT = "alignment";
-
-    // Font settings
-    static final String DEFAULT_FONT_NAME = "Arial";
-    static final int DEFAULT_FONT_STYLE = Font.BOLD;
-    static final int RENDER_FONT_DEFAULT_SIZE = 36;
-    static final int PREVIEW_FONT_SIZE = 14;
 
     // Chosen to be short but exercise both upper and lower case
     public static final String STARTER_TEXT = "Hello\nWORLD";
@@ -101,9 +101,8 @@ public class SignGenerator extends JFrame {
         textArea.setText(STARTER_TEXT);
         textArea.setLineWrap(false);
 
-        JScrollPane scrollPane = new JScrollPane(textArea);
         inputPanel.add(instructionLabel, BorderLayout.NORTH);
-        inputPanel.add(scrollPane, BorderLayout.CENTER);
+        inputPanel.add(textArea, BorderLayout.CENTER);
 
         // Create a default font
         renderFont = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, RENDER_FONT_DEFAULT_SIZE);
@@ -126,8 +125,11 @@ public class SignGenerator extends JFrame {
         JPanel settingsPanel = new SettingsPanel();
 
         add(statusLabel, BorderLayout.NORTH);
-        add(inputPanel, BorderLayout.WEST);
-        add(settingsPanel, BorderLayout.CENTER);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                                   inputPanel, settingsPanel);
+        splitPane.setOneTouchExpandable(true);
+        splitPane.setDividerLocation(400);
+        add(splitPane, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
@@ -172,6 +174,7 @@ public class SignGenerator extends JFrame {
         if (chosenFont != null) {
             renderFont = chosenFont;
             previewFont = renderFont.deriveFont((float)PREVIEW_FONT_SIZE);
+            textArea.setFont(previewFont);
             fontNameLabel.setText(renderFont.getFontName());
         }
     }
@@ -247,8 +250,6 @@ public class SignGenerator extends JFrame {
 	class SettingsPanel extends JPanel {
 
 		public SettingsPanel() {
-			var content = this;
-
 			// Load preferences, act on some here, others later.
 			String renderer = prefs.get(PREF_RENDERER, "C");
 			setRenderer(switch(renderer) {
@@ -328,31 +329,31 @@ public class SignGenerator extends JFrame {
 			// Renderer label
 			gbc.gridx = 0;
 			gbc.gridy = 0;
-			content.add(new JLabel("Renderer:"), gbc);
+			add(new JLabel("Renderer:"), gbc);
 
 			// Renderer choice
 			gbc.gridx = 1;
-			content.add(rendererClaude, gbc);
+			add(rendererClaude, gbc);
 			gbc.gridy++;
-			content.add(rendererGemini, gbc);
+			add(rendererGemini, gbc);
 
+            // Font
 			gbc.gridx = 0;
 			gbc.gridy++;
-			var setFontButton = new JButton("Font");
-			content.add(setFontButton, gbc);
+			var setFontButton = new JButton("Font...");
+			add(setFontButton, gbc);
 			setFontButton.addActionListener(e -> changeFont());
 			gbc.gridx = 1;
             var fontInfoPanel = new JPanel();
             fontInfoPanel.add(new JLabel("Name:"));
             fontInfoPanel.add(fontNameLabel);
 			fontInfoPanel.add(fontSizeSpinner, gbc);
-            content.add(fontInfoPanel);
+            add(fontInfoPanel, gbc);
 
 			// Alignment
-			// Renderer label
 			gbc.gridx = 0;
 			gbc.gridy++;
-			content.add(new JLabel("Alignment"), gbc);
+			add(new JLabel("Alignment"), gbc);
 
 			// Renderer choice
 			gbc.gridx++;
@@ -360,39 +361,39 @@ public class SignGenerator extends JFrame {
 			aligners.add(alignmentLeft, gbc);
 			aligners.add(alignmentCenter, gbc);
 			aligners.add(alignmentRight, gbc);
-			content.add(aligners, gbc);
+			add(aligners, gbc);
 
 			// Gory detail values
 			gbc.gridx = 0;
 			gbc.gridy++;
-			content.add(new JLabel("Base height (mm):"), gbc);
+			add(new JLabel("Base height (mm):"), gbc);
 			gbc.gridx = 1;
-			content.add(baseHeightSpinner, gbc);
+			add(baseHeightSpinner, gbc);
 
 			gbc.gridx = 0;
 			gbc.gridy++;
-			content.add(new JLabel("Base Margin (mm):"), gbc);
+			add(new JLabel("Base Margin (mm):"), gbc);
 			gbc.gridx = 1;
-			content.add(baseMarginSpinner, gbc);
+			add(baseMarginSpinner, gbc);
 
 			gbc.gridx = 0;
 			gbc.gridy++;
-			content.add(new JLabel("Letter height (mm):"), gbc);
+			add(new JLabel("Letter height (mm):"), gbc);
 			gbc.gridx = 1;
-			content.add(letterHeightSpinner, gbc);
+			add(letterHeightSpinner, gbc);
 
 			gbc.gridx = 0;
 			gbc.gridy++;
-			content.add(new JLabel("Bevel height (mm):"), gbc);
+			add(new JLabel("Bevel height (mm):"), gbc);
 			gbc.gridx = 1;
-			content.add(bevelHeightSpinner, gbc);
+			add(bevelHeightSpinner, gbc);
 
 			// Done button
 			gbc.gridx = 0;
 			gbc.gridy++;
 			gbc.gridwidth = 2;
 			gbc.anchor = GridBagConstraints.CENTER;
-			content.add(doneButton, gbc);
+			add(doneButton, gbc);
 
 			// Save & close
 			doneButton.addActionListener(e -> {
