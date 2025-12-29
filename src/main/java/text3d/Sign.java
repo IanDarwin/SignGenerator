@@ -8,11 +8,13 @@ import java.awt.*;
 /// A single Sign object, mainly for save/open
 /// @author Ian Darwin
 ///
-public record Sign(String text, String fontName, int fontSize, int fontStyle){
+public record Sign(String text, String fontName, int fontSize, int fontStyle,
+                   TextAlign alignment, double baseHeight, double baseMargin, double letterHeight, double bevelHeight){
 
     // Secondary constructor
-    Sign(String text, Font font) {
-        this(text, font.getFontName(), font.getSize(), font.getStyle());
+    Sign(String text, Font font, TextAlign alignment, double baseHeight, double baseMargin, double letterHeight, double bevelHeight) {
+        this(text, font.getFontName(), font.getSize(), font.getStyle(),
+                alignment, baseHeight, baseMargin, letterHeight, bevelHeight);
     }
 
     String toJSON() {
@@ -21,10 +23,17 @@ public record Sign(String text, String fontName, int fontSize, int fontStyle){
                         "text": "%s",
                         "fontName": "%s",
                         "fontSize": %d,
-                        "fontStyle": %d
-                    }""", // Note no trailing "," on fontStyle or any final element.
-                    text.replaceAll("\n", "\\\\n"), fontName(), fontSize(), fontStyle());
+                        "fontStyle": %d,
+                        "alignment": "%s",
+                        "baseHeight": %f, 
+                        "baseMargin": %f, 
+                        "letterHeight": %f, 
+                        "bevelHeight": %f
+                    }""", // Note no trailing "," on final element.
+                    text.replaceAll("\n", "\\\\n"), fontName(), fontSize(), fontStyle(),
+                        alignment, baseHeight, baseMargin, letterHeight, bevelHeight);
         }
+
         static Sign fromJSON(String jsonInput) {
             ObjectMapper mapper = new ObjectMapper();
 

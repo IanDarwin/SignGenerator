@@ -227,7 +227,9 @@ public class SignGenerator extends JFrame {
         else {
             try {
                 Files.writeString(Path.of(signFilePath),
-                        new Sign(textArea.getText(), renderFont).toJSON());
+                        new Sign(textArea.getText(), renderFont,
+                            textAlignment, baseHeight, baseMargin, letterHeight, bevelHeight
+                                ).toJSON());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -240,9 +242,10 @@ public class SignGenerator extends JFrame {
         fileChooser.setFileFilter(signFilter);
         if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             try {
-                final String name = fileChooser.getSelectedFile().getAbsolutePath();
-                Files.writeString(Path.of(name),
-                        new Sign(textArea.getText(), renderFont).toJSON());
+                signFilePath = fileChooser.getSelectedFile().getAbsolutePath();
+                Files.writeString(Path.of(signFilePath),
+                        new Sign(textArea.getText(), renderFont,
+                                textAlignment, baseHeight, baseMargin, letterHeight, bevelHeight).toJSON());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -381,7 +384,6 @@ public class SignGenerator extends JFrame {
 			gbc.gridy++;
 			gbc.gridwidth = 2;
 			gbc.anchor = GridBagConstraints.CENTER;
-
 
 			// Save & close - no longer needed
 			if (false) {
