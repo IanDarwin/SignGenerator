@@ -286,6 +286,12 @@ public class SignGenerator extends JFrame {
 			JRadioButton alignmentRight = new JRadioButton("Right");
 			alignmentRight.addActionListener(e->setAlignment(TextAlign.RIGHT));
 			alignmentGroup.add(alignmentRight);
+            switch(textAlignment) {
+                case LEFT: alignmentLeft.setSelected(true); break;
+                case CENTER: alignmentCenter.setSelected(true); break;
+                case RIGHT: alignmentRight.setSelected(true); break;
+                default: throw new IllegalStateException("Unknown text alignment");
+            }
 
 			JSpinner fontSizeSpinner = new JSpinner(
 					new SpinnerNumberModel(fontSize, 1, 200, 1)
