@@ -25,8 +25,8 @@ public class SignGenerator extends JFrame {
     private final JButton generateSTLButton, generate3MFButton;
     private final JLabel statusLabel;
     private final JLabel fontNameLabel;
-    private JSpinner fontSizeSpinner, baseHeightSpinner, baseMarginSpinner, letterHeightSpinner, bevelHeightSpinner;
-    private JRadioButton alignmentLeft, alignmentCenter, alignmentRight;
+    private final JSpinner fontSizeSpinner, baseHeightSpinner, baseMarginSpinner, letterHeightSpinner, bevelHeightSpinner;
+    private final JRadioButton alignmentLeft, alignmentCenter, alignmentRight;
     private Font previewFont, renderFont;
 
     // DEFAULT Dimensions in mm
@@ -46,6 +46,7 @@ public class SignGenerator extends JFrame {
     int fontSize;
     TextAlign textAlignment;
     static final double SCALE_FACTOR = 0.5;
+    boolean resetNeeded = false;
 
     // Keys for storing/retrieving the above in Java Preferences
     // Used by Settings class
@@ -166,27 +167,29 @@ public class SignGenerator extends JFrame {
         fontSizeSpinner = new JSpinner(
                 new SpinnerNumberModel(fontSize, 1, 200, 1)
         );
-        
-        baseHeight = baseMargin = letterHeight = bevelHeight = 1.0;
+
+        if (resetNeeded) {
+            baseHeight = baseMargin = letterHeight = bevelHeight = 1.0;
+        }
 
         baseHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
         );
-        baseHeightSpinner.addChangeListener(e -> { setBaseHeight((double)baseHeightSpinner.getValue());});
+        baseHeightSpinner.addChangeListener(e -> setBaseHeight((double)baseHeightSpinner.getValue()));
         baseMarginSpinner = new JSpinner(
                 new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
         );
-        baseMarginSpinner.addChangeListener(e -> { setBaseMargin((double)baseMarginSpinner.getValue());});
+        baseMarginSpinner.addChangeListener(e -> setBaseMargin((double)baseMarginSpinner.getValue()));
 
         letterHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(letterHeight, 1.0, 100, 1)
         );
-        letterHeightSpinner.addChangeListener(e -> { setLetterHeight((double)letterHeightSpinner.getValue());});
+        letterHeightSpinner.addChangeListener(e -> setLetterHeight((double)letterHeightSpinner.getValue()));
 
         bevelHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(bevelHeight, 0.1, 5.0, 0.1)
         );
-        bevelHeightSpinner.addChangeListener(e -> { setBevelHeight((double)bevelHeightSpinner.getValue());});
+        bevelHeightSpinner.addChangeListener(e -> setBevelHeight((double)bevelHeightSpinner.getValue()));
 
         // Layout
         settingsPanel.setLayout(new GridBagLayout());
