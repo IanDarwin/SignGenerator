@@ -166,12 +166,13 @@ public class SignGenerator extends JFrame {
         fontSizeSpinner = new JSpinner(
                 new SpinnerNumberModel(fontSize, 1, 200, 1)
         );
+        
+        baseHeight = baseMargin = letterHeight = bevelHeight = 1.0;
 
         baseHeightSpinner = new JSpinner(
                 new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
         );
         baseHeightSpinner.addChangeListener(e -> { setBaseHeight((double)baseHeightSpinner.getValue());});
-
         baseMarginSpinner = new JSpinner(
                 new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
         );
@@ -318,9 +319,9 @@ public class SignGenerator extends JFrame {
         JMenuItem helpAbout = new JMenuItem("About...");
         helpAbout.addActionListener(e -> JOptionPane.showMessageDialog(this,
                 """
-                        JMenuItem generates 3D print files for signs, stamps, etc.\n
-                        Built by Rejminet Group https://rejmi.net\n
-                        Let us build YOUR Mobile and/or Desktop app!"""));
+                        <html>JMenuItem generates 3D print files for signs, stamps, etc.<br/>
+                        Built by Rejminet Group https://rejmi.net<br/>
+                        Let us build <em>your</em> Mobile and/or Desktop app!"""));
         helpMenu.add(helpAbout);
         bar.add(helpMenu);
         return bar;
