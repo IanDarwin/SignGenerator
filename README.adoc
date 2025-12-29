@@ -20,6 +20,7 @@ on platforms where OpenJFX is supported.
 
 == Lots more to do:
 
+* Need a "reset to defaults" button and cli option in case you read a corrupted .sgn file.
 * Test out mkinstaller on Windoze and Linux platforms.
 * Load/save: Add confirming popup to be consistent.
 * Optional border
