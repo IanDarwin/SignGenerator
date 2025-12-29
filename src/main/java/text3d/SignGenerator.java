@@ -283,6 +283,8 @@ public class SignGenerator extends JFrame {
 
     private JMenuBar createMenuBar() {
         JMenuBar bar = new JMenuBar();
+
+        // FILE MENU
         JMenu fileMenu = new JMenu("File");
         var newSign = new JMenuItem("New Sign");
         newSign.addActionListener(e -> textArea.setText(STARTER_TEXT));
@@ -307,8 +309,20 @@ public class SignGenerator extends JFrame {
         fileMenu.add(exit);
         bar.add(fileMenu);
 
+        // Edit Menu
         JMenu editMenu = new JMenu("Edit");
         bar.add(editMenu);
+
+        // Help Menu
+        JMenu helpMenu = new JMenu("Help");
+        JMenuItem helpAbout = new JMenuItem("About...");
+        helpAbout.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                """
+                        JMenuItem generates 3D print files for signs, stamps, etc.\n
+                        Built by Rejminet Group https://rejmi.net\n
+                        Let us build YOUR Mobile and/or Desktop app!"""));
+        helpMenu.add(helpAbout);
+        bar.add(helpMenu);
         return bar;
     }
 
