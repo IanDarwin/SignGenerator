@@ -126,7 +126,146 @@ public class SignGenerator extends JFrame {
         statusLabel = new JLabel("Ready to generate");
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
 
-        JPanel settingsPanel = new SettingsPanel();
+        // The main configuration panel
+        JPanel settingsPanel = new JPanel();
+
+        // Choice of Renderer
+        ButtonGroup rendererGroup = new ButtonGroup();
+        JRadioButton rendererClaude = new JRadioButton("Claude Renderer");
+        rendererClaude.addActionListener(e->setRenderer(new ClaudeTextToFile()));
+        rendererGroup.add(rendererClaude);
+
+        JRadioButton rendererGemini = new JRadioButton("Gemini Renderer");
+        rendererGemini.addActionListener(e->setRenderer(new GeminiTextToFile()));
+        rendererGroup.add(rendererGemini);
+
+        if ("C".equals(renderer)) {
+            rendererClaude.setSelected(true);
+        } else {
+            rendererGemini.setSelected(true);
+        }
+
+        // Choice of alignment
+        ButtonGroup alignmentGroup = new ButtonGroup();
+        JRadioButton alignmentLeft = new JRadioButton("Left");
+        alignmentLeft.addActionListener(e->setAlignment(TextAlign.LEFT));
+        alignmentGroup.add(alignmentLeft);
+        JRadioButton alignmentCenter = new JRadioButton("Center");
+        alignmentCenter.addActionListener(e->setAlignment(TextAlign.CENTER));
+        alignmentGroup.add(alignmentCenter);
+        JRadioButton alignmentRight = new JRadioButton("Right");
+        alignmentRight.addActionListener(e->setAlignment(TextAlign.RIGHT));
+        alignmentGroup.add(alignmentRight);
+        switch(textAlignment) {
+            case LEFT: alignmentLeft.setSelected(true); break;
+            case CENTER: alignmentCenter.setSelected(true); break;
+            case RIGHT: alignmentRight.setSelected(true); break;
+            default: throw new IllegalStateException("Unknown text alignment");
+        }
+
+        JSpinner fontSizeSpinner = new JSpinner(
+                new SpinnerNumberModel(fontSize, 1, 200, 1)
+        );
+
+        JSpinner baseHeightSpinner = new JSpinner(
+                new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
+        );
+        baseHeightSpinner.addChangeListener(e -> { setBaseHeight((double)baseHeightSpinner.getValue());});
+
+        JSpinner baseMarginSpinner = new JSpinner(
+                new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
+        );
+        baseMarginSpinner.addChangeListener(e -> { setBaseMargin((double)baseMarginSpinner.getValue());});
+
+        JSpinner letterHeightSpinner = new JSpinner(
+                new SpinnerNumberModel(letterHeight, 1.0, 100, 1)
+        );
+        letterHeightSpinner.addChangeListener(e -> { setLetterHeight((double)letterHeightSpinner.getValue());});
+
+        JSpinner bevelHeightSpinner = new JSpinner(
+                new SpinnerNumberModel(bevelHeight, 0.1, 5.0, 0.1)
+        );
+        bevelHeightSpinner.addChangeListener(e -> { setBevelHeight((double)bevelHeightSpinner.getValue());});
+
+        // Layout
+        settingsPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        // Renderer label
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        settingsPanel.add(new JLabel("Renderer:"), gbc);
+
+        // Renderer choice
+        gbc.gridx = 1;
+        settingsPanel.add(rendererClaude, gbc);
+        gbc.gridy++;
+        settingsPanel.add(rendererGemini, gbc);
+
+        // Font
+        gbc.gridx = 0;
+        gbc.gridy++;
+        var setFontButton = new JButton("Font...");
+        settingsPanel.add(setFontButton, gbc);
+        setFontButton.addActionListener(e -> changeFont());
+        gbc.gridx = 1;
+        var fontInfoPanel = new JPanel();
+        fontInfoPanel.add(new JLabel("Name:"));
+        fontInfoPanel.add(fontNameLabel);
+        fontInfoPanel.add(fontSizeSpinner, gbc);
+        settingsPanel.add(fontInfoPanel, gbc);
+
+        // Alignment
+        gbc.gridx = 0;
+        gbc.gridy++;
+        settingsPanel.add(new JLabel("Alignment"), gbc);
+
+        // Renderer choice
+        gbc.gridx++;
+        JPanel aligners = new JPanel();
+        aligners.add(alignmentLeft, gbc);
+        aligners.add(alignmentCenter, gbc);
+        aligners.add(alignmentRight, gbc);
+        settingsPanel.add(aligners, gbc);
+
+        // Gory detail values
+        gbc.gridx = 0;
+        gbc.gridy++;
+        settingsPanel.add(new JLabel("Base height (mm):"), gbc);
+        gbc.gridx = 1;
+        settingsPanel.add(baseHeightSpinner, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        settingsPanel.add(new JLabel("Base Margin (mm):"), gbc);
+        gbc.gridx = 1;
+        settingsPanel.add(baseMarginSpinner, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        settingsPanel.add(new JLabel("Letter height (mm):"), gbc);
+        gbc.gridx = 1;
+        settingsPanel.add(letterHeightSpinner, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        settingsPanel.add(new JLabel("Bevel height (mm):"), gbc);
+        gbc.gridx = 1;
+        settingsPanel.add(bevelHeightSpinner, gbc);
+
+        // Save & close - no longer needed
+        if (false) {
+            prefs.put(PREF_RENDERER, rendererGemini.isSelected() ? "G" : "C");
+            prefs.put(PREF_FONT_NAME, fontName);
+            prefs.putInt(PREF_FONT_SIZE, (Integer) fontSizeSpinner.getValue());
+            prefs.putDouble(PREF_BASE_HEIGHT, (Double) baseHeightSpinner.getValue());
+            prefs.putDouble(PREF_BASE_MARGIN, (Double) baseMarginSpinner.getValue());
+            prefs.putDouble(PREF_LETTER_HEIGHT, (Double) letterHeightSpinner.getValue());
+            prefs.putDouble(PREF_BEVEL_HEIGHT, (Double) bevelHeightSpinner.getValue());
+        };
+
 
         add(statusLabel, BorderLayout.NORTH);
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
@@ -251,158 +390,6 @@ public class SignGenerator extends JFrame {
             }
         }
     }
-
-	/// Settings dialog for the Sign Generator.
-	///
-	class SettingsPanel extends JPanel {
-
-		public SettingsPanel() {
-
-			// Choice of Renderer
-
-			ButtonGroup rendererGroup = new ButtonGroup();
-			JRadioButton rendererClaude = new JRadioButton("Claude Renderer");
-			rendererClaude.addActionListener(e->setRenderer(new ClaudeTextToFile()));
-			rendererGroup.add(rendererClaude);
-
-			JRadioButton rendererGemini = new JRadioButton("Gemini Renderer");
-			rendererGemini.addActionListener(e->setRenderer(new GeminiTextToFile()));
-			rendererGroup.add(rendererGemini);
-
-			if ("C".equals(renderer)) {
-				rendererClaude.setSelected(true);
-			} else {
-				rendererGemini.setSelected(true);
-			}
-
-			// Choice of alignment
-			ButtonGroup alignmentGroup = new ButtonGroup();
-			JRadioButton alignmentLeft = new JRadioButton("Left");
-			alignmentLeft.addActionListener(e->setAlignment(TextAlign.LEFT));
-			alignmentGroup.add(alignmentLeft);
-			JRadioButton alignmentCenter = new JRadioButton("Center");
-			alignmentCenter.addActionListener(e->setAlignment(TextAlign.CENTER));
-			alignmentGroup.add(alignmentCenter);
-			JRadioButton alignmentRight = new JRadioButton("Right");
-			alignmentRight.addActionListener(e->setAlignment(TextAlign.RIGHT));
-			alignmentGroup.add(alignmentRight);
-            switch(textAlignment) {
-                case LEFT: alignmentLeft.setSelected(true); break;
-                case CENTER: alignmentCenter.setSelected(true); break;
-                case RIGHT: alignmentRight.setSelected(true); break;
-                default: throw new IllegalStateException("Unknown text alignment");
-            }
-
-			JSpinner fontSizeSpinner = new JSpinner(
-					new SpinnerNumberModel(fontSize, 1, 200, 1)
-			);
-
-			JSpinner baseHeightSpinner = new JSpinner(
-					new SpinnerNumberModel(baseHeight, 1.0, 10, 0.5)
-			);
-			baseHeightSpinner.addChangeListener(e -> { setBaseHeight((double)baseHeightSpinner.getValue());});
-
-			JSpinner baseMarginSpinner = new JSpinner(
-					new SpinnerNumberModel(baseMargin, 1.0, 15.0, 0.5)
-			);
-			baseMarginSpinner.addChangeListener(e -> { setBaseMargin((double)baseMarginSpinner.getValue());});
-
-			JSpinner letterHeightSpinner = new JSpinner(
-					new SpinnerNumberModel(letterHeight, 1.0, 100, 1)
-			);
-			letterHeightSpinner.addChangeListener(e -> { setLetterHeight((double)letterHeightSpinner.getValue());});
-
-			JSpinner bevelHeightSpinner = new JSpinner(
-					new SpinnerNumberModel(bevelHeight, 0.1, 5.0, 0.1)
-			);
-			bevelHeightSpinner.addChangeListener(e -> { setBevelHeight((double)bevelHeightSpinner.getValue());});
-
-			// Layout
-			setLayout(new GridBagLayout());
-			GridBagConstraints gbc = new GridBagConstraints();
-			gbc.insets = new Insets(8, 8, 8, 8);
-			gbc.anchor = GridBagConstraints.WEST;
-
-			// Renderer label
-			gbc.gridx = 0;
-			gbc.gridy = 0;
-			add(new JLabel("Renderer:"), gbc);
-
-			// Renderer choice
-			gbc.gridx = 1;
-			add(rendererClaude, gbc);
-			gbc.gridy++;
-			add(rendererGemini, gbc);
-
-            // Font
-			gbc.gridx = 0;
-			gbc.gridy++;
-			var setFontButton = new JButton("Font...");
-			add(setFontButton, gbc);
-			setFontButton.addActionListener(e -> changeFont());
-			gbc.gridx = 1;
-            var fontInfoPanel = new JPanel();
-            fontInfoPanel.add(new JLabel("Name:"));
-            fontInfoPanel.add(fontNameLabel);
-			fontInfoPanel.add(fontSizeSpinner, gbc);
-            add(fontInfoPanel, gbc);
-
-			// Alignment
-			gbc.gridx = 0;
-			gbc.gridy++;
-			add(new JLabel("Alignment"), gbc);
-
-			// Renderer choice
-			gbc.gridx++;
-			JPanel aligners = new JPanel();
-			aligners.add(alignmentLeft, gbc);
-			aligners.add(alignmentCenter, gbc);
-			aligners.add(alignmentRight, gbc);
-			add(aligners, gbc);
-
-			// Gory detail values
-			gbc.gridx = 0;
-			gbc.gridy++;
-			add(new JLabel("Base height (mm):"), gbc);
-			gbc.gridx = 1;
-			add(baseHeightSpinner, gbc);
-
-			gbc.gridx = 0;
-			gbc.gridy++;
-			add(new JLabel("Base Margin (mm):"), gbc);
-			gbc.gridx = 1;
-			add(baseMarginSpinner, gbc);
-
-			gbc.gridx = 0;
-			gbc.gridy++;
-			add(new JLabel("Letter height (mm):"), gbc);
-			gbc.gridx = 1;
-			add(letterHeightSpinner, gbc);
-
-			gbc.gridx = 0;
-			gbc.gridy++;
-			add(new JLabel("Bevel height (mm):"), gbc);
-			gbc.gridx = 1;
-			add(bevelHeightSpinner, gbc);
-
-			// Done button
-			gbc.gridx = 0;
-			gbc.gridy++;
-			gbc.gridwidth = 2;
-			gbc.anchor = GridBagConstraints.CENTER;
-
-			// Save & close - no longer needed
-			if (false) {
-				prefs.put(PREF_RENDERER, rendererGemini.isSelected() ? "G" : "C");
-                prefs.put(PREF_FONT_NAME, fontName);
-				prefs.putInt(PREF_FONT_SIZE, (Integer) fontSizeSpinner.getValue());
-				prefs.putDouble(PREF_BASE_HEIGHT, (Double) baseHeightSpinner.getValue());
-				prefs.putDouble(PREF_BASE_MARGIN, (Double) baseMarginSpinner.getValue());
-				prefs.putDouble(PREF_LETTER_HEIGHT, (Double) letterHeightSpinner.getValue());
-				prefs.putDouble(PREF_BEVEL_HEIGHT, (Double) bevelHeightSpinner.getValue());
-			};
-		}
-	}
 
     private void generate(OutputFormat fmt, JButton generateButton) {
         String text = textArea.getText().trim();
