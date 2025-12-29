@@ -32,18 +32,21 @@ public class SignGenerator extends JFrame {
     static final double DEFAULT_BEVEL_HEIGHT = 0.5;
 
     // DEFAULT Font settings
-    static final String DEFAULT_FONT_NAME = "Arial";
+    static final String DEFAULT_FONT_NAME = "Sans";
+    public static final int DEFAULT_RENDER_FONT_SIZE = 36;
     static final int DEFAULT_FONT_STYLE = Font.BOLD;
-    static final int RENDER_FONT_DEFAULT_SIZE = 36;
     static final int PREVIEW_FONT_SIZE = 14;
 
     double baseHeight, baseMargin, letterHeight, bevelHeight;
+    String fontName;
+    int fontSize;
     TextAlign textAlignment;
     static final double SCALE_FACTOR = 0.5;
 
     // Keys for storing/retrieving the above in Java Preferences
     // Used by Settings class
     static final String PREF_RENDERER = "renderer";
+    static final String PREF_FONT_NAME = "fontName";
     static final String PREF_FONT_SIZE = "fontSize";
     static final String PREF_BASE_HEIGHT = "baseHeight";
     static final String PREF_BASE_MARGIN = "baseMargin";
@@ -66,7 +69,7 @@ public class SignGenerator extends JFrame {
         "3MF Files", "3mf");
 
     TextToFile renderer =
-            new GeminiTextToFile();
+            new ClaudeTextToFile();
 
     public SignGenerator() {
         setTitle("3D Sign Generator");
@@ -79,6 +82,8 @@ public class SignGenerator extends JFrame {
         letterHeight = prefs.getDouble(PREF_LETTER_HEIGHT, DEFAULT_LETTER_HEIGHT);
         bevelHeight = prefs.getDouble(PREF_BEVEL_HEIGHT, DEFAULT_BEVEL_HEIGHT);
         textAlignment = TextAlign.values()[prefs.getInt(PREF_ALIGNMENT, TextAlign.LEFT.ordinal())];
+        fontName = prefs.get(PREF_FONT_NAME, DEFAULT_FONT_NAME);
+        fontSize = prefs.getInt(PREF_FONT_SIZE, DEFAULT_RENDER_FONT_SIZE);
 
         String renderer = prefs.get(PREF_RENDERER, "C");
         setRenderer(switch(renderer) {
@@ -86,8 +91,7 @@ public class SignGenerator extends JFrame {
             case "G" -> new GeminiTextToFile();
             default -> throw new IllegalStateException("Unexpected value: " + renderer);
         });
-
-        fontNameLabel = new JLabel(DEFAULT_FONT_NAME);
+        fontNameLabel = new JLabel(fontName);
 
         setJMenuBar(createMenuBar());
 
@@ -105,7 +109,7 @@ public class SignGenerator extends JFrame {
         inputPanel.add(textArea, BorderLayout.CENTER);
 
         // Create a default font
-        renderFont = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, RENDER_FONT_DEFAULT_SIZE);
+        renderFont = new Font(DEFAULT_FONT_NAME, DEFAULT_FONT_STYLE, DEFAULT_RENDER_FONT_SIZE);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
@@ -250,20 +254,6 @@ public class SignGenerator extends JFrame {
 	class SettingsPanel extends JPanel {
 
 		public SettingsPanel() {
-			// Load preferences, act on some here, others later.
-			String renderer = prefs.get(PREF_RENDERER, "C");
-			setRenderer(switch(renderer) {
-				case "C" -> new ClaudeTextToFile();
-				case "G" -> new GeminiTextToFile();
-				default -> throw new IllegalStateException("Unexpected value: " + renderer);
-			});
-			int fontSize = prefs.getInt(PREF_FONT_SIZE, 36);
-			double baseHeight = prefs.getDouble(PREF_BASE_HEIGHT, DEFAULT_BASE_HEIGHT);
-			double baseMargin = prefs.getDouble(PREF_BASE_MARGIN, DEFAULT_BASE_MARGIN);
-			double letterHeight = prefs.getDouble(PREF_LETTER_HEIGHT, DEFAULT_LETTER_HEIGHT);
-			double bevelDepth = prefs.getDouble(PREF_BEVEL_HEIGHT, DEFAULT_BEVEL_HEIGHT);
-
-			// GUI Components
 
 			// Choice of Renderer
 
@@ -314,11 +304,9 @@ public class SignGenerator extends JFrame {
 			letterHeightSpinner.addChangeListener(e -> { setLetterHeight((double)letterHeightSpinner.getValue());});
 
 			JSpinner bevelHeightSpinner = new JSpinner(
-					new SpinnerNumberModel(bevelDepth, 0.1, 5.0, 0.1)
+					new SpinnerNumberModel(bevelHeight, 0.1, 5.0, 0.1)
 			);
 			bevelHeightSpinner.addChangeListener(e -> { setBevelHeight((double)bevelHeightSpinner.getValue());});
-
-			JButton doneButton = new JButton("Done");
 
 			// Layout
 			setLayout(new GridBagLayout());
@@ -393,17 +381,18 @@ public class SignGenerator extends JFrame {
 			gbc.gridy++;
 			gbc.gridwidth = 2;
 			gbc.anchor = GridBagConstraints.CENTER;
-			add(doneButton, gbc);
 
-			// Save & close
-			doneButton.addActionListener(e -> {
+
+			// Save & close - no longer needed
+			if (false) {
 				prefs.put(PREF_RENDERER, rendererGemini.isSelected() ? "G" : "C");
+                prefs.put(PREF_FONT_NAME, fontName);
 				prefs.putInt(PREF_FONT_SIZE, (Integer) fontSizeSpinner.getValue());
 				prefs.putDouble(PREF_BASE_HEIGHT, (Double) baseHeightSpinner.getValue());
 				prefs.putDouble(PREF_BASE_MARGIN, (Double) baseMarginSpinner.getValue());
 				prefs.putDouble(PREF_LETTER_HEIGHT, (Double) letterHeightSpinner.getValue());
 				prefs.putDouble(PREF_BEVEL_HEIGHT, (Double) bevelHeightSpinner.getValue());
-			});
+			};
 		}
 	}
 
