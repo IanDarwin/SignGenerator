@@ -7,7 +7,7 @@ in the slicer, and print on TPU or similar filament.
 
 == Usage & Caveats
 
-Just run it. Either type your sign text into the text box,
+Just run it. Either type or paste your sign text into the text box,
 pass strings (one quoted string per line) from the command line,
 or, use File->Load to load the sign text from a ".txt" file.
 
