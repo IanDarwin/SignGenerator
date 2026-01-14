@@ -11,7 +11,8 @@ Just run it. Either type or paste your sign text into the text box,
 pass strings (one quoted string per line) from the command line,
 or, use File->Load to load the sign text from a ".txt" file.
 
-Note: quite a few fonts have issues with one or another of the renderers,
+Note: Two different renderers are provided, neither of which is perfect.
+Quite a few fonts have issues with one or another of the renderers,
 so try different fonts and both renderers until something good comes up.
 They may look funny when loaded into the slicer; slice them and look at the results before deciding.
 Trial and error will be your friend.
