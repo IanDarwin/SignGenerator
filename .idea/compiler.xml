@@ -7,7 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="TextToSTL" />
+        <module name="signgenerator" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="signgenerator.main" target="25" />
+      <module name="signgenerator.test" target="25" />
+    </bytecodeTargetLevel>
   </component>
 </project>
