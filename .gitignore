@@ -13,3 +13,4 @@
 .externalNativeBuild
 /target
 local.properties
+docs
