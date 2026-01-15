@@ -12,9 +12,9 @@ import java.lang.foreign.SymbolLookup;
 /** Standalone tool to try out dynamic loading on various OSes. */
 public class FreeLoader {
 
-	final static String osName = System.getProperty("os.name");
+	private final static String osName = System.getProperty("os.name");
 
-	static OsInfo[] oses = {
+	private final static OsInfo[] oses = {
 		new OsInfo("OpenBSD",
 				"libfreetype.so",
 				List.of("/usr/X11R6/lib/X11/fonts", "/usr/local/share/fonts")),
@@ -24,6 +24,10 @@ public class FreeLoader {
 				List.of("/System/Library/Fonts")),
 	};
 
+	/**
+	 * Find the OsInfo structure for the OS we are running on
+	 * @return An Optional, containing the correct OsInfo if found, else empty
+	 */
 	public static Optional<OsInfo> getOsInfo() {
 		for (OsInfo os : oses) {
 			if (os.name().equals(osName)) {
@@ -33,20 +37,33 @@ public class FreeLoader {
 		return Optional.empty();
 	}
 
-	public static Optional<String> loadFreetypeLibrary() {
+	/**
+	 * Does what it says on the tin: loads the Freetype Library
+	 * @return The SymbolLookup to access FreeType via FFI
+	 */
+	public static SymbolLookup loadFreetypeLibrary() {
 		var ret = getOsInfo();
 		if (ret.isPresent()) {
 			var os = ret.get();
 			if (os.name().equals(osName)) {
 				System.out.println(os);
 				final SymbolLookup LNK = SymbolLookup.libraryLookup(os.libraryName(), Arena.global());
-				return Optional.of("Success: LNK = " + LNK);
+				System.out.println("Success: LNK = " + LNK);
+				return LNK;
 			}
 		}
-		return Optional.of("OsInfo not matched");
+		throw new IllegalStateException("OsInfo not matched");
 	}
 
-	final static List<Path> fontPaths = new ArrayList<>();
+	private final static List<Path> fontPaths = new ArrayList<>();
+
+	/**
+	 * Get the font file corresponding to the given face name
+	 * @param fontName The name we are looking for
+	 * @return The Path to the file, if we find it
+	 * @throws IOException If Files.walk() finds an error.
+	 * @throws IllegalStateException If we fail to find a single exact match
+	 */
 	public static Path getFontFile(String fontName) throws IOException {
 		System.out.printf("getFontFile(%s)\n", fontName);
 		var lcFontName = fontName.toLowerCase();
@@ -73,7 +90,7 @@ public class FreeLoader {
 
 	static void main() throws IOException {
 		var lib = loadFreetypeLibrary();
-		lib.ifPresent(System.out::println);
+		System.out.println(lib);
 		System.out.println("Found: " + getFontFile("DejaVuSans"));
 	}
 }
