@@ -10,9 +10,6 @@
         <module name="signgenerator" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="signgenerator.main" target="25" />
-      <module name="signgenerator.test" target="25" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="25" />
   </component>
 </project>
