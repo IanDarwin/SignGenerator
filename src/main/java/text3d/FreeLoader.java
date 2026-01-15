@@ -1,10 +1,13 @@
 package text3d;
 
+import java.util.Optional;
 import java.lang.foreign.Arena;
 import java.lang.foreign.SymbolLookup;
 
 /** Standalone tool to try out dynamic loading on various OSes. */
 public class FreeLoader {
+
+	final static String osName = System.getProperty("os.name");
 
 	record OS(String name, String libraryPath, String libraryName) {}
 
@@ -15,17 +18,39 @@ public class FreeLoader {
 		new OS("Mac OS X", null, "libfreetype.dylib"),
 	};
 
-	public static void main(String[] args) {
-		var osName = System.getProperty("os.name");
+	public static Optional<OS> getOsInfo() {
 		System.out.println("osName = " + osName);
 		for (OS os : oses) {
 			if (os.name().equals(osName)) {
-				System.out.println(os);
-				final SymbolLookup LNK = SymbolLookup.libraryLookup(os.libraryName(), Arena.global());
-				System.out.println("LNK = " + LNK);
-				return;
+				return Optional.of(os);
 			}
 		}
-		System.out.println("OS not matched");
+		return Optional.empty();
 	}
+
+	public static Optional<String> getLoadLibrary() {
+		var ret = getOsInfo();
+		if (ret.isPresent()) {
+			var os = ret.get();
+			if (os.name().equals(osName)) {
+				System.out.println(os);
+				final SymbolLookup LNK = SymbolLookup.libraryLookup(os.libraryName(), Arena.global());
+				return Optional.of("Success: LNK = " + LNK);
+			}
+		}
+		return Optional.of("OS not matched");
+	}
+
+	public static Optional<String> getFontFile() {
+		System.out.println("XXX writeme getFontFile()");
+		return Optional.empty();
+	}
+
+	public static void main(String[] args) {
+		var lib = getLoadLibrary();
+		lib.ifPresent(System.out::println);
+		var fontFile = getFontFile();
+		fontFile.ifPresent(System.out::println);
+	}
+
 }
