@@ -146,10 +146,19 @@ public class SignGenerator extends JFrame {
         rendererGemini.addActionListener(e->setRenderer(new GeminiTextToFile()));
         rendererGroup.add(rendererGemini);
 
-        if ("C".equals(renderer)) {
-            rendererClaude.setSelected(true);
-        } else {
-            rendererGemini.setSelected(true);
+        JRadioButton rendererFreeType = new JRadioButton("FreeType Renderer");
+        rendererFreeType.addActionListener(e->setRenderer(new FreeTypeRenderer()));
+        rendererGroup.add(rendererFreeType);
+
+        switch(renderer) {
+            case "C":
+                rendererClaude.setSelected(true); break;
+            case "F":
+                rendererGemini.setSelected(true); break;
+            case "G":
+                rendererFreeType.setSelected(true); break;
+            default:
+                System.out.println("INVALID: renderer = " + renderer);
         }
 
         // Choice of alignment
@@ -207,6 +216,8 @@ public class SignGenerator extends JFrame {
         settingsPanel.add(rendererClaude, gbc);
         gbc.gridy++;
         settingsPanel.add(rendererGemini, gbc);
+        gbc.gridy++;
+        settingsPanel.add(rendererFreeType, gbc);
 
         // Font
         gbc.gridx = 0;
