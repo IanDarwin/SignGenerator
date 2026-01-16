@@ -97,7 +97,7 @@ public class SignGenerator extends JFrame {
             case "C" -> new ClaudeTextToFile();
             case "G" -> new GeminiTextToFile();
             case "F" -> new FreeTypeRenderer();
-            default -> throw new IllegalStateException("Unexpected value: " + renderer);
+            default -> throw new IllegalStateException("Unexpected Renderer value: " + renderer);
         });
         fontNameLabel = new JLabel(fontName);
 
@@ -150,17 +150,6 @@ public class SignGenerator extends JFrame {
         JRadioButton rendererFreeType = new JRadioButton("FreeType Renderer");
         rendererFreeType.addActionListener(e->setRenderer(new FreeTypeRenderer()));
         rendererGroup.add(rendererFreeType);
-
-        switch(renderer) {
-            case "C":
-                rendererClaude.setSelected(true); break;
-            case "F":
-                rendererGemini.setSelected(true); break;
-            case "G":
-                rendererFreeType.setSelected(true); break;
-            default:
-                System.out.println("INVALID: renderer = " + renderer);
-        }
 
         // Choice of alignment
         ButtonGroup alignmentGroup = new ButtonGroup();
