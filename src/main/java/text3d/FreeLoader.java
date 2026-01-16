@@ -22,6 +22,9 @@ public class FreeLoader {
 		new OsInfo("Mac Os X",
 				"libfreetype.dylib",
 				List.of("/System/Library/Fonts")),
+		new OsInfo("Weindows",
+				"libfreetype.dll",
+				List.of("C:/Windows/Fonts")),
 	};
 
 	/**
@@ -76,7 +79,11 @@ public class FreeLoader {
 			System.out.println("Looking in " + path);
 			Files.walk(path, Integer.MAX_VALUE)
 					.filter(p->p.getFileName().toString().endsWith(".ttf"))
-					.filter(p -> p.getFileName().toString().toLowerCase().endsWith(lcFontName + ".ttf"))
+					.filter(p -> p.getFileName()
+							.toString()
+							.toLowerCase()
+							.replace(' ', '-')
+							.endsWith(lcFontName + ".ttf"))
 					.forEach(fontPaths::add);
 		}
 		if (fontPaths.isEmpty()) {

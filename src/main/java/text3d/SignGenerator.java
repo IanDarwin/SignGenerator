@@ -96,6 +96,7 @@ public class SignGenerator extends JFrame {
         setRenderer(switch(renderer) {
             case "C" -> new ClaudeTextToFile();
             case "G" -> new GeminiTextToFile();
+            case "F" -> new FreeTypeRenderer();
             default -> throw new IllegalStateException("Unexpected value: " + renderer);
         });
         fontNameLabel = new JLabel(fontName);

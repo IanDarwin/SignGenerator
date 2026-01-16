@@ -8,12 +8,13 @@ import java.lang.foreign.*;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FreeTypeRenderer implements TextToFile {
 
-    private static final SymbolLookup LNK = SymbolLookup.libraryLookup("libfreetype.so", Arena.global());
+    private static final SymbolLookup LNK = FreeLoader.loadFreetypeLibrary();
     private static final Linker LINKER = Linker.nativeLinker();
 
     // --- Native Method Handles ---
@@ -29,6 +30,12 @@ public class FreeTypeRenderer implements TextToFile {
 
     @Override
     public void generateFile(String text, Font font, File file, OutputFormat format, TextAlign align) throws IOException {
+
+        // First see if we can even get the TTF fonf for this font
+        String s = font.getFontName();
+        // This will throw an exception if it can't find file
+        Path fontPath = FreeLoader.getFontFile(s);
+
         try (Arena arena = Arena.ofConfined(); FileWriter writer = new FileWriter(file)) {
             writer.write("solid TextSign\n");
 
@@ -38,9 +45,7 @@ public class FreeTypeRenderer implements TextToFile {
             MemorySegment library = libPtr.get(ValueLayout.ADDRESS, 0);
 
             MemorySegment facePtr = arena.allocate(ValueLayout.ADDRESS);
-            // In production, map 'font' to a real .ttf path
-            String fontPath = "/usr/X11R6/lib/X11/fonts/TTF/DejaVuSans.ttf";
-            FT_New_Face.invokeExact(library, arena.allocateFrom(fontPath), 0L, facePtr);
+            FT_New_Face.invokeExact(library, arena.allocateFrom(fontPath.toString()), 0L, facePtr);
             MemorySegment face = facePtr.get(ValueLayout.ADDRESS, 0);
             FT_Set_Pixel_Sizes.invokeExact(face, 0, 48);
 
