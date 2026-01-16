@@ -19,7 +19,7 @@ public class FreeLoader {
 				"libfreetype.so",
 				List.of("/usr/X11R6/lib/X11/fonts", "/usr/local/share/fonts")),
 		// This should be named "macOS" or "Darwin" but Java still uses this name,
-		new OsInfo("Mac Os X",
+		new OsInfo("Mac OS X",
 				"libfreetype.dylib",
 				List.of("/System/Library/Fonts")),
 		new OsInfo("Weindows",
