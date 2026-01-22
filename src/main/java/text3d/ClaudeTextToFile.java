@@ -197,7 +197,7 @@ public class ClaudeTextToFile implements TextToFile {
 
     private void writeSTL(List<Triangle> triangles, File file) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            writer.write("solid sign\n");
+            writer.write("solid TextSign ; ClaudeRenderer\n");
 
             for (Triangle tri : triangles) {
                 writer.write(String.format("  facet normal %.6f %.6f %.6f\n",
@@ -213,7 +213,7 @@ public class ClaudeTextToFile implements TextToFile {
                 writer.write("  endfacet\n");
             }
 
-            writer.write("endsolid sign\n");
+            writer.write("endsolid TextSign\n");
         }
     }
 
