@@ -22,6 +22,7 @@ on platforms where OpenJFX is supported.
 == Lots more to do:
 
 * Need a "reset to defaults" button and cli option in case you read a corrupted .sgn file.
+* Option to expand baseplate, for adding SVG or other stuff
 * Load/save: Add confirming popup to be consistent.
 * Optional border
 * Optional rounded corners?
