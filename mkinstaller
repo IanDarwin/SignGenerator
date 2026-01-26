@@ -45,8 +45,9 @@ fi
 # Make sure our code is up-to-date
 git checkout main
 git pull
+trap 0 1 15 "git checkout main"
 # Make sure the version is tagged, and select it
-git checkout v${RELEASE_VERSION}
+git checkout v${RELEASE_VERSION} || exit
 
 # Now try command-line args
 BUILT=NO
@@ -95,7 +96,5 @@ for fmt in ${inst_format}; do
 		exit 1
 	}
 done
-
-git checkout main
 
 echo "$0 done at $(date)"
