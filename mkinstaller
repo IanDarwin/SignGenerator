@@ -43,6 +43,7 @@ if [ $FOUND -eq 0 ]; then
 fi
 
 # Make sure our code is up-to-date
+git checkout main
 git pull
 # Make sure the version is tagged, and select it
 git checkout v${RELEASE_VERSION}
