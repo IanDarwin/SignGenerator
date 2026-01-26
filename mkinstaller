@@ -44,6 +44,8 @@ fi
 
 # Make sure our code is up-to-date
 git pull
+# Make sure the version is tagged, and select it
+git checkout v${RELEASE_VERSION}
 
 # Now try command-line args
 BUILT=NO
@@ -92,5 +94,7 @@ for fmt in ${inst_format}; do
 		exit 1
 	}
 done
+
+git checkout main
 
 echo "$0 done at $(date)"
