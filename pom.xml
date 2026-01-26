@@ -95,31 +95,6 @@
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.4.0</version>
-				<configuration>
-					<reportOutputDirectory>${project.basedir}</reportOutputDirectory>
-					<destDir>docs</destDir>
-					<failOnError>false</failOnError>
-					<links>
-						<link>https://docs.oracle.com/en/java/javase/${javase.version}/docs/api</link>
-					</links>
-					<show>protected</show>
-					<source>${javase.version}</source>
-					<use>false</use>
-				</configuration>
-				<executions>
-					<execution>
-						<id>attach-javadocs</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-
 
 			<!-- Use 'mvn package assembly:single' for runnable jar-with-depends created in 'target' -->
 			<plugin>
@@ -142,6 +117,7 @@
 					</archive>
 				</configuration>
 			</plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
