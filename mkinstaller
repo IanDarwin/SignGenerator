@@ -23,6 +23,7 @@ case $(uname) in
 			icon_format=icns
 			;;
 	Linux)		inst_format="rpm deb"
+			echo "Be sure the rpm-build package is installed!"
 			icon_format=png
 			OS_SPECIFIC="--linux-shortcut --linux-menu-group Graphics --linux-app-category Graphics --resource-dir unixlinux"
 			;;
